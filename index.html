@@ -108,10 +108,10 @@ let cameraY = 0;
 
 let ball = {
   x: canvas.width / 2,
-  y: canvas.height - 120,
+  y: canvas.height - 80,  // <-- Change -120 par -80 pour qu'elle parte plus bas
   r: 10,
-  vx: 4,
-  vy: -6,
+  vx: 3,                  // <-- On baisse un peu la vitesse (de 4 à 3)
+  vy: -4.5,               // <-- On baisse la vitesse de montée (de -6 à -4.5)
   trail: []
 };
 
