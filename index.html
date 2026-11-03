@@ -110,8 +110,8 @@ let ball = {
   x: canvas.width / 2,
   y: canvas.height - 120,
   r: 10,
-  vx: 4,
-  vy: -6,
+  vx: 2.2,   // <-- Vitesse horizontale douce (au lieu de 4)
+  vy: -4.5,  // <-- Vitesse de montée équilibrée (au lieu de -6)
   trail: []
 };
 
@@ -120,7 +120,10 @@ let stars = [];
 let colorHue = 180;
 
 // Génération des étoiles et étoiles filantes d'ambiance
-for(let i=0; i<60; i++) {
+for(let i = 0; i < 6; i++) {
+  spawnObstacle(canvas.height - 300 - (i * 210)); // <-- 210 au lieu de 180 pour plus d'espace entre les barres
+}
+
   stars.push({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
