@@ -35,7 +35,7 @@
   .screen {
     position: absolute;
     inset: 0;
-    background: rgba(8, 8, 22, 0.92);
+    background: rgba(8, 8, 22, 0.95);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -47,8 +47,8 @@
   }
   h1 {
     font-size: 2.2rem;
-    color: #00f3ff;
-    text-shadow: 0 0 15px #00f3ff;
+    color: #ff007f;
+    text-shadow: 0 0 15px #ff007f;
     margin-bottom: 5px;
     text-align: center;
   }
@@ -59,57 +59,43 @@
     padding: 0 20px;
   }
   .btn {
-    background: linear-gradient(135deg, #00f3ff, #0066ff);
-    border: none;
+    background: transparent;
+    border: 2px solid #00f3ff;
     padding: 15px 40px;
     font-size: 1.2rem;
     font-weight: bold;
     border-radius: 30px;
-    color: #000;
-    box-shadow: 0 0 20px rgba(0, 243, 255, 0.6);
+    color: #00f3ff;
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.4);
     cursor: pointer;
+    margin: 10px 0;
+    width: 80%;
+    max-width: 250px;
+    text-align: center;
     z-index: 20;
   }
-  .score-hud {
-    position: absolute;
-    top: 15px;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: space-between;
-    padding: 0 20px;
-    pointer-events: none;
-    z-index: 5;
-  }
-  .hud-box {
-    background: rgba(8, 8, 22, 0.8);
-    border: 1px solid #00f3ff;
-    padding: 6px 14px;
-    border-radius: 12px;
-    font-size: 0.9rem;
-    font-weight: bold;
+  .btn-primary {
+    background: linear-gradient(135deg, #00f3ff, #0066ff);
+    color: #000;
+    border: none;
   }
 </style>
 </head>
 <body>
 
 <div id="gameContainer">
-  <div class="score-hud">
-    <div class="hud-box" style="color: #00f3ff;">RECORD : <span id="hudBest">0</span></div>
-    <div class="hud-box" style="color: #fff;">SCORE : <span id="hudScore">0</span></div>
-  </div>
-
   <div id="menuScreen" class="screen">
     <h1>UPWARD DROP</h1>
-    <p>Tape pour changer de direction. Monte le plus haut possible !</p>
-    <button class="btn" id="startBtn">JOUER</button>
+    <p>Tape pour changer de direction, survis à la montée et récupère les pièces !</p>
+    <button class="btn btn-primary" id="startBtn">JOUER</button>
   </div>
 
   <div id="gameOverScreen" class="screen hidden">
-    <h1 style="color: #ff007f; text-shadow: 0 0 15px #ff007f;">GAME OVER</h1>
-    <p id="finalScoreText" style="font-size: 1.3rem; color: #fff;">Score : 0</p>
-    <p id="bestScoreText" style="color: #00f3ff;">Record : 0</p>
-    <button class="btn" id="restartBtn">REJOUER</button>
+    <h1>GAME OVER</h1>
+    <p id="finalScoreText" style="font-size: 1.3rem; color: #fff; margin-bottom: 10px;">Score : 0</p>
+    <p id="finalCoinsText" style="color: #ffd700; margin-bottom: 25px;">Pièces : 0</p>
+    <button class="btn btn-primary" id="restartBtn">REJOUER</button>
+    <button class="btn" id="menuBtn">MENU</button>
   </div>
 
   <canvas id="c"></canvas>
@@ -128,23 +114,21 @@ resize();
 
 let state = 'MENU';
 let score = 0;
-let bestScore = localStorage.getItem('upward_best') || 0;
-document.getElementById('hudBest').innerText = bestScore;
-
+let coins = parseInt(localStorage.getItem('upward_coins')) || 0;
+let bestScore = parseInt(localStorage.getItem('upward_best')) || 0;
 let cameraY = 0;
-let baseSpeedX = 1.8;
-let baseSpeedY = -3.2;
 
 let ball = {
   x: canvas.width / 2,
   y: canvas.height - 100,
   r: 10,
-  vx: baseSpeedX,
-  vy: baseSpeedY,
+  vx: 2.2,
+  vy: -3.5,
   trail: []
 };
 
 let obstacles = [];
+let items = [];
 let stars = [];
 let colorHue = 180;
 
@@ -162,34 +146,70 @@ for(let i=0; i<60; i++) {
 function initGame() {
   score = 0;
   cameraY = 0;
-  
-  // Vitesse initiale très tranquille (Niveau 1)
-  baseSpeedX = 1.8;
-  baseSpeedY = -3.2;
-
   ball.x = canvas.width / 2;
   ball.y = canvas.height - 100;
-  ball.vx = baseSpeedX;
-  ball.vy = baseSpeedY;
+  ball.vx = 2.2;
+  ball.vy = -3.5;
   ball.trail = [];
   obstacles = [];
+  items = [];
 
-  document.getElementById('hudScore').innerText = '0';
-  document.getElementById('hudBest').innerText = bestScore;
-
-  // On génère 5 barres au départ avec un grand passage facile et beaucoup d'espace
   for(let i = 0; i < 5; i++) {
-    spawnObstacle(canvas.height - 280 - (i * 240));
+    spawnObstacle(canvas.height - 300 - (i * 240), i);
   }
 }
 
-function spawnObstacle(yPos) {
-  // Plus le score monte, plus le passage se rétrécit légèrement
-  let difficultyFactor = Math.min(score / 300, 1);
-  let barWidth = (canvas.width * 0.55) - (difficultyFactor * 30); // Large barre facile au début
-  let x = Math.random() * (canvas.width - barWidth - 60) + 30;
+function spawnObstacle(yPos, index) {
+  let currentLevel = Math.floor(score / 30) + 1;
+  let type = 0;
 
-  obstacles.push({ x: x, y: yPos, w: barWidth, h: 14 });
+  // Au début (Niveau 1-2), on ne met que des barres simples faciles à ouvertures.
+  // Plus on monte, plus on diversifie les formes d'obstacles !
+  if (currentLevel >= 3) {
+    let rand = Math.random();
+    if (rand < 0.4) type = 0;       // Barre avec ouverture au milieu
+    else if (rand < 0.7) type = 1;  // Double bloc latéral (style slaloms)
+    else type = 2;                  // Barre mobile/piège central
+  }
+
+  let obs = { y: yPos, h: 14, type: type, parts: [] };
+
+  if (type === 0) {
+    // Type 0 : Barre avec un trou au milieu
+    let gapWidth = Math.max(110 - (currentLevel * 3), 70);
+    let gapX = Math.random() * (canvas.width - gapWidth - 60) + 30;
+    obs.parts.push({ x: 15, w: gapX - 15 });
+    obs.parts.push({ x: gapX + gapWidth, w: (canvas.width - 15) - (gapX + gapWidth) });
+
+    // Pièce au milieu du trou
+    if (Math.random() > 0.3) {
+      items.push({ x: gapX + gapWidth / 2, y: yPos - 35, r: 8, collected: false });
+    }
+  } 
+  else if (type === 1) {
+    // Type 1 : Slalom (deux blocs sur les côtés, passage central ou alterné)
+    let w1 = 80 + Math.random() * 40;
+    let w2 = 80 + Math.random() * 40;
+    obs.parts.push({ x: 15, w: w1 });
+    obs.parts.push({ x: canvas.width - 15 - w2, w: w2 });
+
+    if (Math.random() > 0.4) {
+      items.push({ x: canvas.width / 2, y: yPos - 35, r: 8, collected: false });
+    }
+  } 
+  else {
+    // Type 2 : Pilier central ou barre étroite difficile
+    let centerW = Math.max(90 - (currentLevel * 2), 50);
+    let centerX = (canvas.width - centerW) / 2;
+    obs.parts.push({ x: centerX, w: centerW });
+
+    if (Math.random() > 0.3) {
+      items.push({ x: centerX - 30, y: yPos - 35, r: 8, collected: false });
+      items.push({ x: centerX + centerW + 30, y: yPos - 35, r: 8, collected: false });
+    }
+  }
+
+  obstacles.push(obs);
 }
 
 function startGame(e) {
@@ -200,14 +220,21 @@ function startGame(e) {
   state = 'PLAYING';
 }
 
-const startBtn = document.getElementById('startBtn');
-const restartBtn = document.getElementById('restartBtn');
+function showMenu(e) {
+  if(e) e.preventDefault();
+  document.getElementById('gameOverScreen').classList.add('hidden');
+  document.getElementById('menuScreen').classList.remove('hidden');
+  state = 'MENU';
+}
 
-startBtn.addEventListener('click', startGame);
-startBtn.addEventListener('touchstart', startGame);
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('startBtn').addEventListener('touchstart', startGame);
 
-restartBtn.addEventListener('click', startGame);
-restartBtn.addEventListener('touchstart', startGame);
+document.getElementById('restartBtn').addEventListener('click', startGame);
+document.getElementById('restartBtn').addEventListener('touchstart', startGame);
+
+document.getElementById('menuBtn').addEventListener('click', showMenu);
+document.getElementById('menuBtn').addEventListener('touchstart', showMenu);
 
 window.addEventListener('pointerdown', (e) => {
   if(state === 'PLAYING' && !e.target.closest('button')) {
@@ -218,12 +245,10 @@ window.addEventListener('pointerdown', (e) => {
 function update() {
   if (state !== 'PLAYING') return;
 
-  // Augmentation progressive de la vitesse en montant
-  let speedMultiplier = 1 + (score / 400); 
-  let currentVxSign = Math.sign(ball.vx) || 1;
-  
-  ball.vx = currentVxSign * (baseSpeedX * speedMultiplier);
-  ball.vy = baseSpeedY * speedMultiplier;
+  let speedMult = 1 + (score / 450);
+  let currentDir = Math.sign(ball.vx) || 1;
+  ball.vx = currentDir * (2.2 * speedMult);
+  ball.vy = -3.5 * speedMult;
 
   ball.x += ball.vx;
   ball.y += ball.vy;
@@ -232,12 +257,9 @@ function update() {
   if(ball.trail.length > 12) ball.trail.shift();
 
   let currentHeightScore = Math.floor(-ball.y / 5);
-  if (currentHeightScore > score) {
-    score = currentHeightScore;
-    document.getElementById('hudScore').innerText = score;
-  }
+  if (currentHeightScore > score) score = currentHeightScore;
 
-  colorHue = (180 + Math.floor(score / 30) * 20) % 360;
+  colorHue = (180 + Math.floor(score / 40) * 20) % 360;
 
   if (ball.x - ball.r <= 15) {
     ball.x = 15 + ball.r;
@@ -247,32 +269,45 @@ function update() {
     ball.vx = -Math.abs(ball.vx);
   }
 
-  let targetCameraY = ball.y - canvas.height * 0.5;
+  let targetCameraY = ball.y - canvas.height * 0.45;
   cameraY += (targetCameraY - cameraY) * 0.1;
 
-  let lastObstacleY = obstacles.length > 0 ? obstacles[obstacles.length - 1].y : cameraY;
-  if(lastObstacleY > cameraY - canvas.height) {
-    let spacing = Math.max(240 - (score / 5), 180); // Espacement progressif
-    spawnObstacle(lastObstacleY - spacing);
+  let lastY = obstacles.length > 0 ? obstacles[obstacles.length - 1].y : cameraY;
+  if(lastY > cameraY - canvas.height) {
+    let spacing = Math.max(230 - (score / 6), 170);
+    spawnObstacle(lastY - spacing, obstacles.length);
   }
 
   obstacles = obstacles.filter(o => o.y < cameraY + canvas.height + 100);
+  items = items.filter(it => it.y < cameraY + canvas.height + 100);
 
-  obstacles.forEach(o => {
-    if (
-      ball.x + ball.r > o.x &&
-      ball.x - ball.r < o.x + o.w &&
-      ball.y + ball.r > o.y &&
-      ball.y - ball.r < o.y + o.h
-    ) {
-      state = 'GAMEOVER';
-      if (score > bestScore) {
-        bestScore = score;
-        localStorage.setItem('upward_best', bestScore);
+  // Ramassage des pièces
+  items.forEach(it => {
+    if (!it.collected) {
+      let dist = Math.hypot(ball.x - it.x, ball.y - it.y);
+      if (dist < ball.r + it.r) {
+        it.collected = true;
+        coins++;
+        localStorage.setItem('upward_coins', coins);
       }
-      document.getElementById('finalScoreText').innerText = "Score : " + score;
-      document.getElementById('bestScoreText').innerText = "Record : " + bestScore;
-      document.getElementById('gameOverScreen').classList.remove('hidden');
+    }
+  });
+
+  // Collisions avec les différentes parties d'obstacles
+  obstacles.forEach(o => {
+    if (ball.y + ball.r > o.y && ball.y - ball.r < o.y + o.h) {
+      o.parts.forEach(part => {
+        if (ball.x + ball.r > part.x && ball.x - ball.r < part.x + part.w) {
+          state = 'GAMEOVER';
+          if (score > bestScore) {
+            bestScore = score;
+            localStorage.setItem('upward_best', bestScore);
+          }
+          document.getElementById('finalScoreText').innerText = "Score : " + score;
+          document.getElementById('finalCoinsText').innerText = "Pièces gagnées : " + coins;
+          document.getElementById('gameOverScreen').classList.remove('hidden');
+        }
+      });
     }
   });
 }
@@ -311,12 +346,28 @@ function draw() {
   ctx.lineTo(canvas.width - 15, cameraY + canvas.height);
   ctx.stroke();
 
+  // Dessin des obstacles variables
   obstacles.forEach(o => {
-    ctx.fillStyle = `hsl(${(colorHue + 120) % 360}, 100%, 60%)`;
+    ctx.fillStyle = '#ff007f';
     ctx.shadowBlur = 10;
-    ctx.shadowColor = ctx.fillStyle;
-    ctx.fillRect(o.x, o.y, o.w, o.h);
+    ctx.shadowColor = '#ff007f';
+    o.parts.forEach(part => {
+      ctx.fillRect(part.x, o.y, part.w, o.h);
+    });
     ctx.shadowBlur = 0;
+  });
+
+  // Pièces
+  items.forEach(it => {
+    if (!it.collected) {
+      ctx.fillStyle = '#ffd700';
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = '#ffd700';
+      ctx.beginPath();
+      ctx.arc(it.x, it.y, it.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
   });
 
   for(let i=0; i<ball.trail.length; i++) {
@@ -337,6 +388,28 @@ function draw() {
   ctx.shadowBlur = 0;
 
   ctx.restore();
+
+  if (state === 'PLAYING') {
+    ctx.fillStyle = 'rgba(8, 8, 22, 0.85)';
+    ctx.fillRect(15, 15, 90, 40);
+    ctx.strokeStyle = `hsl(${colorHue}, 100%, 50%)`;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(15, 15, 90, 40);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(score, 60, 42);
+
+    let currentLevel = Math.floor(score / 30) + 1;
+    ctx.fillStyle = 'rgba(8, 8, 22, 0.85)';
+    ctx.fillRect(canvas.width - 145, 15, 130, 40);
+    ctx.strokeRect(canvas.width - 145, 15, 130, 40);
+
+    ctx.fillStyle = '#ff007f';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillText(`NIV.${currentLevel}`, canvas.width - 80, 41);
+  }
 }
 
 function loop() {
