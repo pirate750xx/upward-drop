@@ -86,7 +86,7 @@
 <div id="gameContainer">
   <div id="menuScreen" class="screen">
     <h1>UPWARD DROP</h1>
-    <p>Tape pour changer de direction, survis à la montée et récupère les pièces !</p>
+    <p>Tape pour changer de direction, commence doucement et survis le plus longtemps possible !</p>
     <button class="btn btn-primary" id="startBtn">JOUER</button>
   </div>
 
@@ -122,8 +122,8 @@ let ball = {
   x: canvas.width / 2,
   y: canvas.height - 100,
   r: 10,
-  vx: 2.2,
-  vy: -3.5,
+  vx: 1.8,  // Vitesse de départ très douce
+  vy: -2.5, // Montée lente et maîtrisée
   trail: []
 };
 
@@ -148,64 +148,60 @@ function initGame() {
   cameraY = 0;
   ball.x = canvas.width / 2;
   ball.y = canvas.height - 100;
-  ball.vx = 2.2;
-  ball.vy = -3.5;
+  ball.vx = 1.8;
+  ball.vy = -2.5;
   ball.trail = [];
   obstacles = [];
   items = [];
 
+  // Barres espacées généreusement au départ pour un Niveau 1 très accessible
   for(let i = 0; i < 5; i++) {
-    spawnObstacle(canvas.height - 300 - (i * 240), i);
+    spawnObstacle(canvas.height - 300 - (i * 260), i);
   }
 }
 
 function spawnObstacle(yPos, index) {
-  let currentLevel = Math.floor(score / 30) + 1;
+  let currentLevel = Math.floor(score / 40) + 1;
   let type = 0;
 
-  // Au début (Niveau 1-2), on ne met que des barres simples faciles à ouvertures.
-  // Plus on monte, plus on diversifie les formes d'obstacles !
-  if (currentLevel >= 3) {
+  // Variété d'obstacles qui n'apparaît qu'après le niveau 3 ou 4
+  if (currentLevel >= 4) {
     let rand = Math.random();
-    if (rand < 0.4) type = 0;       // Barre avec ouverture au milieu
-    else if (rand < 0.7) type = 1;  // Double bloc latéral (style slaloms)
-    else type = 2;                  // Barre mobile/piège central
+    if (rand < 0.5) type = 0;
+    else if (rand < 0.8) type = 1;
+    else type = 2;
   }
 
   let obs = { y: yPos, h: 14, type: type, parts: [] };
 
   if (type === 0) {
-    // Type 0 : Barre avec un trou au milieu
-    let gapWidth = Math.max(110 - (currentLevel * 3), 70);
+    let gapWidth = Math.max(120 - (currentLevel * 2), 80);
     let gapX = Math.random() * (canvas.width - gapWidth - 60) + 30;
     obs.parts.push({ x: 15, w: gapX - 15 });
     obs.parts.push({ x: gapX + gapWidth, w: (canvas.width - 15) - (gapX + gapWidth) });
 
-    // Pièce au milieu du trou
     if (Math.random() > 0.3) {
-      items.push({ x: gapX + gapWidth / 2, y: yPos - 35, r: 8, collected: false });
+      items.push({ x: gapX + gapWidth / 2, y: yPos - 40, r: 8, collected: false });
     }
   } 
   else if (type === 1) {
-    // Type 1 : Slalom (deux blocs sur les côtés, passage central ou alterné)
-    let w1 = 80 + Math.random() * 40;
-    let w2 = 80 + Math.random() * 40;
+    let w1 = 70 + Math.random() * 30;
+    let w2 = 70 + Math.random() * 30;
     obs.parts.push({ x: 15, w: w1 });
     obs.parts.push({ x: canvas.width - 15 - w2, w: w2 });
 
     if (Math.random() > 0.4) {
-      items.push({ x: canvas.width / 2, y: yPos - 35, r: 8, collected: false });
+      items.push({ x: canvas.width / 2, y: yPos - 40, r: 8, collected: false });
     }
   } 
   else {
-    // Type 2 : Pilier central ou barre étroite difficile
-    let centerW = Math.max(90 - (currentLevel * 2), 50);
+    let centerW = Math.max(80 - (currentLevel * 2), 45);
     let centerX = (canvas.width - centerW) / 2;
     obs.parts.push({ x: centerX, w: centerW });
 
     if (Math.random() > 0.3) {
-      items.push({ x: centerX - 30, y: yPos - 35, r: 8, collected: false });
-      items.push({ x: centerX + centerW + 30, y: yPos - 35, r: 8, collected: false });
+      items.push({ x: centerX - 35, y: yPos - 40, r: 8, collected: false });
+      items.push({ x: centerX + centerW + 35, y: yPos - 40, r: 8, collected: false });
     }
   }
 
@@ -245,10 +241,11 @@ window.addEventListener('pointerdown', (e) => {
 function update() {
   if (state !== 'PLAYING') return;
 
-  let speedMult = 1 + (score / 450);
+  // Accélération extrêmement douce : la vitesse ne commence à monter qu'après un gros score
+  let speedMult = 1 + (score / 1200); 
   let currentDir = Math.sign(ball.vx) || 1;
-  ball.vx = currentDir * (2.2 * speedMult);
-  ball.vy = -3.5 * speedMult;
+  ball.vx = currentDir * (1.8 * speedMult);
+  ball.vy = -2.5 * speedMult;
 
   ball.x += ball.vx;
   ball.y += ball.vy;
@@ -256,10 +253,10 @@ function update() {
   ball.trail.push({x: ball.x, y: ball.y});
   if(ball.trail.length > 12) ball.trail.shift();
 
-  let currentHeightScore = Math.floor(-ball.y / 5);
+  let currentHeightScore = Math.floor(-ball.y / 6);
   if (currentHeightScore > score) score = currentHeightScore;
 
-  colorHue = (180 + Math.floor(score / 40) * 20) % 360;
+  colorHue = (180 + Math.floor(score / 50) * 20) % 360;
 
   if (ball.x - ball.r <= 15) {
     ball.x = 15 + ball.r;
@@ -274,14 +271,13 @@ function update() {
 
   let lastY = obstacles.length > 0 ? obstacles[obstacles.length - 1].y : cameraY;
   if(lastY > cameraY - canvas.height) {
-    let spacing = Math.max(230 - (score / 6), 170);
+    let spacing = Math.max(260 - (score / 8), 190);
     spawnObstacle(lastY - spacing, obstacles.length);
   }
 
   obstacles = obstacles.filter(o => o.y < cameraY + canvas.height + 100);
   items = items.filter(it => it.y < cameraY + canvas.height + 100);
 
-  // Ramassage des pièces
   items.forEach(it => {
     if (!it.collected) {
       let dist = Math.hypot(ball.x - it.x, ball.y - it.y);
@@ -293,7 +289,6 @@ function update() {
     }
   });
 
-  // Collisions avec les différentes parties d'obstacles
   obstacles.forEach(o => {
     if (ball.y + ball.r > o.y && ball.y - ball.r < o.y + o.h) {
       o.parts.forEach(part => {
@@ -346,7 +341,6 @@ function draw() {
   ctx.lineTo(canvas.width - 15, cameraY + canvas.height);
   ctx.stroke();
 
-  // Dessin des obstacles variables
   obstacles.forEach(o => {
     ctx.fillStyle = '#ff007f';
     ctx.shadowBlur = 10;
@@ -357,7 +351,6 @@ function draw() {
     ctx.shadowBlur = 0;
   });
 
-  // Pièces
   items.forEach(it => {
     if (!it.collected) {
       ctx.fillStyle = '#ffd700';
@@ -401,7 +394,7 @@ function draw() {
     ctx.textAlign = 'center';
     ctx.fillText(score, 60, 42);
 
-    let currentLevel = Math.floor(score / 30) + 1;
+    let currentLevel = Math.floor(score / 40) + 1;
     ctx.fillStyle = 'rgba(8, 8, 22, 0.85)';
     ctx.fillRect(canvas.width - 145, 15, 130, 40);
     ctx.strokeRect(canvas.width - 145, 15, 130, 40);
