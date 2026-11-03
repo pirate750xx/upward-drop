@@ -108,26 +108,26 @@ let cameraY = 0;
 
 let ball = {
   x: canvas.width / 2,
-  y: canvas.height - 80,  // <-- Change -120 par -80 pour qu'elle parte plus bas
+  y: canvas.height - 120,
   r: 10,
-  vx: 3,                  // <-- On baisse un peu la vitesse (de 4 à 3)
-  vy: -4.5,               // <-- On baisse la vitesse de montée (de -6 à -4.5)
+  vx: 4,
+  vy: -6,
   trail: []
 };
 
 let obstacles = [];
 let stars = [];
-let particles = [];
 let colorHue = 180;
 
-for(let i=0; i<50; i++) {
+// Génération des étoiles et étoiles filantes d'ambiance
+for(let i=0; i<60; i++) {
   stars.push({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
     size: Math.random() * 2 + 0.5,
-    speed: Math.random() * 0.5 + 0.2,
-    shooting: Math.random() > 0.85,
-    length: 20 + Math.random() * 20
+    speed: Math.random() * 0.6 + 0.2,
+    shooting: Math.random() > 0.8, // Étoiles filantes régulières
+    length: 25 + Math.random() * 25
   });
 }
 
@@ -140,14 +140,13 @@ function initGame() {
   ball.vy = -6;
   ball.trail = [];
   obstacles = [];
-  particles = [];
   for(let i = 0; i < 6; i++) {
     spawnObstacle(canvas.height - 300 - (i * 180));
   }
 }
 
 function spawnObstacle(yPos) {
-  let w = 140 + Math.random() * 70;
+  let w = 130 + Math.random() * 60;
   let x = Math.random() * (canvas.width - w - 40) + 20;
   obstacles.push({ x: x, y: yPos, w: w, h: 14 });
 }
@@ -177,12 +176,14 @@ function update() {
   ball.y += ball.vy;
 
   ball.trail.push({x: ball.x, y: ball.y});
-  if(ball.trail.length > 10) ball.trail.shift();
+  if(ball.trail.length > 12) ball.trail.shift();
 
-  let currentHeightScore = Math.floor(-ball.y / 5);
+  // Le score augmente en direct selon la hauteur atteinte
+  let currentHeightScore = Math.floor(-ball.y / 4);
   if (currentHeightScore > score) score = currentHeightScore;
 
-  colorHue = (180 + Math.floor(score / 50) * 20) % 360;
+  // Changement de couleur intense selon la progression
+  colorHue = (180 + Math.floor(score / 40) * 25) % 360;
 
   if (ball.x - ball.r <= 15) {
     ball.x = 15 + ball.r;
@@ -196,7 +197,7 @@ function update() {
   cameraY += (targetCameraY - cameraY) * 0.1;
 
   if(obstacles.length > 0 && obstacles[obstacles.length - 1].y > cameraY - canvas.height) {
-    spawnObstacle(obstacles[obstacles.length - 1].y - 180);
+    spawnObstacle(obstacles[obstacles.length - 1].y - 170);
   }
 
   obstacles = obstacles.filter(o => o.y < cameraY + canvas.height + 100);
@@ -226,18 +227,19 @@ function draw() {
   ctx.fillStyle = '#080816';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // Dessin des étoiles et des étoiles filantes dynamiques
   stars.forEach(s => {
     s.y += s.speed;
     if (s.y > canvas.height) { s.y = 0; s.x = Math.random() * canvas.width; }
-    ctx.fillStyle = '#ffffff';
     if(s.shooting) {
-      ctx.strokeStyle = '#00f3ff';
+      ctx.strokeStyle = `hsl(${colorHue}, 100%, 70%)`;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(s.x, s.y);
       ctx.lineTo(s.x - s.length, s.y - s.length);
       ctx.stroke();
     } else {
+      ctx.fillStyle = '#ffffff';
       ctx.fillRect(s.x, s.y, s.size, s.size);
     }
   });
@@ -245,6 +247,7 @@ function draw() {
   ctx.save();
   ctx.translate(0, -cameraY);
 
+  // Murs latéraux dynamiques Synthwave
   ctx.strokeStyle = `hsl(${colorHue}, 100%, 50%)`;
   ctx.lineWidth = 4;
   ctx.beginPath();
@@ -254,38 +257,51 @@ function draw() {
   ctx.lineTo(canvas.width - 15, cameraY + canvas.height);
   ctx.stroke();
 
+  // Obstacles changeants
   obstacles.forEach(o => {
-    ctx.fillStyle = '#ff007f';
+    ctx.fillStyle = `hsl(${(colorHue + 120) % 360}, 100%, 60%)`;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = ctx.fillStyle;
     ctx.fillRect(o.x, o.y, o.w, o.h);
+    ctx.shadowBlur = 0; // Reset
   });
 
+  // Traînée de la balle
   for(let i=0; i<ball.trail.length; i++) {
     let t = ball.trail[i];
     let alpha = i / ball.trail.length;
-    ctx.fillStyle = `hsla(${colorHue}, 100%, 50%, ${alpha * 0.4})`;
+    ctx.fillStyle = `hsla(${colorHue}, 100%, 50%, ${alpha * 0.5})`;
     ctx.beginPath();
     ctx.arc(t.x, t.y, ball.r * (i / ball.trail.length), 0, Math.PI * 2);
     ctx.fill();
   }
 
+  // Balle principale
   ctx.fillStyle = '#ffffff';
+  ctx.shadowBlur = 15;
+  ctx.shadowColor = '#00f3ff';
   ctx.beginPath();
   ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
   ctx.fill();
+  ctx.shadowBlur = 0;
 
   ctx.restore();
 
+  // Affichage du score en direct et addictif en haut de l'écran pendant le jeu
   if (state === 'PLAYING') {
-    ctx.fillStyle = 'rgba(8, 8, 22, 0.8)';
-    ctx.fillRect(canvas.width / 2 - 60, 15, 120, 40);
+    ctx.fillStyle = 'rgba(8, 8, 22, 0.85)';
+    ctx.fillRect(canvas.width / 2 - 70, 15, 140, 45);
     ctx.strokeStyle = `hsl(${colorHue}, 100%, 50%)`;
     ctx.lineWidth = 2;
-    ctx.strokeRect(canvas.width / 2 - 60, 15, 120, 40);
+    ctx.strokeRect(canvas.width / 2 - 70, 15, 140, 45);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 20px sans-serif';
+    ctx.font = 'bold 22px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(score, canvas.width / 2, 42);
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = `hsl(${colorHue}, 100%, 50%)`;
+    ctx.fillText(score, canvas.width / 2, 45);
+    ctx.shadowBlur = 0;
   }
 }
 
