@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Upward Drop - Synthwave Arcade</title>
+<style>
+  body {
+    margin: 0;
+    background: #05050a;
+    color: #fff;
+    font-family: sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+    touch-action: none;
+  }
+  #gameContainer {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    height: 100%;
+    max-height: 850px;
+    box-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
+    overflow: hidden;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: #080816;
+  }
+  .screen {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 8, 22, 0.92);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+  }
+  .hidden {
+    display: none !important;
+  }
+  h1 {
+    font-size: 2.2rem;
+    color: #00f3ff;
+    text-shadow: 0 0 15px #00f3ff;
+    margin-bottom: 5px;
+    text-align: center;
+  }
+  p {
+    color: #a0a0c0;
+    margin-bottom: 25px;
+    text-align: center;
+    padding: 0 20px;
+  }
+  .btn {
+    background: linear-gradient(135deg, #00f3ff, #0066ff);
+    border: none;
+    padding: 15px 40px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-radius: 30px;
+    color: #000;
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.6);
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div id="gameContainer">
+  <div id="menuScreen" class="screen">
+    <h1>UPWARD DROP</h1>
+    <p>Tape pour changer de direction. Monte le plus haut possible !</p>
+    <button class="btn" id="startBtn">JOUER</button>
+  </div>
+
+  <div id="gameOverScreen" class="screen hidden">
+    <h1 style="color: #ff007f; text-shadow: 0 0 15px #ff007f;">GAME OVER</h1>
+    <p id="finalScoreText" style="font-size: 1.3rem; color: #fff;">Score : 0</p>
+    <p id="bestScoreText" style="color: #00f3ff;">Record : 0</p>
+    <button class="btn" id="restartBtn">REJOUER</button>
+  </div>
+
+  <canvas id="c"></canvas>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+let state = 'MENU';
+let score = 0;
+let bestScore = localStorage.getItem('upward_best') || 0;
+let cameraY = 0;
+
+let ball = {
+  x: canvas.width / 2,
+  y: canvas.height - 120,
+  r: 10,
+  vx: 4,
+  vy: -6,
+  trail: []
+};
+
+let obstacles = [];
+let stars = [];
+let particles = [];
+let colorHue = 180;
+
+for(let i=0; i<50; i++) {
+  stars.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    size: Math.random() * 2 + 0.5,
+    speed: Math.random() * 0.5 + 0.2,
+    shooting: Math.random() > 0.85,
+    length: 20 + Math.random() * 20
+  });
+}
+
+function initGame() {
+  score = 0;
+  cameraY = 0;
+  ball.x = canvas.width / 2;
+  ball.y = canvas.height - 150;
+  ball.vx = 4;
+  ball.vy = -6;
+  ball.trail = [];
+  obstacles = [];
+  particles = [];
+  for(let i = 0; i < 6; i++) {
+    spawnObstacle(canvas.height - 300 - (i * 180));
+  }
+}
+
+function spawnObstacle(yPos) {
+  let w = 140 + Math.random() * 70;
+  let x = Math.random() * (canvas.width - w - 40) + 20;
+  obstacles.push({ x: x, y: yPos, w: w, h: 14 });
+}
+
+document.getElementById('startBtn').onclick = () => {
+  document.getElementById('menuScreen').classList.add('hidden');
+  initGame();
+  state = 'PLAYING';
+};
+
+document.getElementById('restartBtn').onclick = () => {
+  document.getElementById('gameOverScreen').classList.add('hidden');
+  initGame();
+  state = 'PLAYING';
+};
+
+window.addEventListener('pointerdown', (e) => {
+  if(state === 'PLAYING' && !e.target.closest('button')) {
+    ball.vx *= -1;
+  }
+});
+
+function update() {
+  if (state !== 'PLAYING') return;
+
+  ball.x += ball.vx;
+  ball.y += ball.vy;
+
+  ball.trail.push({x: ball.x, y: ball.y});
+  if(ball.trail.length > 10) ball.trail.shift();
+
+  let currentHeightScore = Math.floor(-ball.y / 5);
+  if (currentHeightScore > score) score = currentHeightScore;
+
+  colorHue = (180 + Math.floor(score / 50) * 20) % 360;
+
+  if (ball.x - ball.r <= 15) {
+    ball.x = 15 + ball.r;
+    ball.vx *= -1;
+  } else if (ball.x + ball.r >= canvas.width - 15) {
+    ball.x = canvas.width - 15 - ball.r;
+    ball.vx *= -1;
+  }
+
+  let targetCameraY = ball.y - canvas.height * 0.45;
+  cameraY += (targetCameraY - cameraY) * 0.1;
+
+  if(obstacles.length > 0 && obstacles[obstacles.length - 1].y > cameraY - canvas.height) {
+    spawnObstacle(obstacles[obstacles.length - 1].y - 180);
+  }
+
+  obstacles = obstacles.filter(o => o.y < cameraY + canvas.height + 100);
+
+  obstacles.forEach(o => {
+    if (
+      ball.x + ball.r > o.x &&
+      ball.x - ball.r < o.x + o.w &&
+      ball.y + ball.r > o.y &&
+      ball.y - ball.r < o.y + o.h
+    ) {
+      state = 'GAMEOVER';
+      if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem('upward_best', bestScore);
+      }
+      document.getElementById('finalScoreText').innerText = "Score : " + score;
+      document.getElementById('bestScoreText').innerText = "Record : " + bestScore;
+      document.getElementById('gameOverScreen').classList.remove('hidden');
+    }
+  });
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#080816';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  stars.forEach(s => {
+    s.y += s.speed;
+    if (s.y > canvas.height) { s.y = 0; s.x = Math.random() * canvas.width; }
+    ctx.fillStyle = '#ffffff';
+    if(s.shooting) {
+      ctx.strokeStyle = '#00f3ff';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(s.x, s.y);
+      ctx.lineTo(s.x - s.length, s.y - s.length);
+      ctx.stroke();
+    } else {
+      ctx.fillRect(s.x, s.y, s.size, s.size);
+    }
+  });
+
+  ctx.save();
+  ctx.translate(0, -cameraY);
+
+  ctx.strokeStyle = `hsl(${colorHue}, 100%, 50%)`;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(15, cameraY);
+  ctx.lineTo(15, cameraY + canvas.height);
+  ctx.moveTo(canvas.width - 15, cameraY);
+  ctx.lineTo(canvas.width - 15, cameraY + canvas.height);
+  ctx.stroke();
+
+  obstacles.forEach(o => {
+    ctx.fillStyle = '#ff007f';
+    ctx.fillRect(o.x, o.y, o.w, o.h);
+  });
+
+  for(let i=0; i<ball.trail.length; i++) {
+    let t = ball.trail[i];
+    let alpha = i / ball.trail.length;
+    ctx.fillStyle = `hsla(${colorHue}, 100%, 50%, ${alpha * 0.4})`;
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, ball.r * (i / ball.trail.length), 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+
+  if (state === 'PLAYING') {
+    ctx.fillStyle = 'rgba(8, 8, 22, 0.8)';
+    ctx.fillRect(canvas.width / 2 - 60, 15, 120, 40);
+    ctx.strokeStyle = `hsl(${colorHue}, 100%, 50%)`;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(canvas.width / 2 - 60, 15, 120, 40);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(score, canvas.width / 2, 42);
+  }
+}
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
