@@ -68,12 +68,37 @@
     color: #000;
     box-shadow: 0 0 20px rgba(0, 243, 255, 0.6);
     cursor: pointer;
+    z-index: 20;
+  }
+  .score-hud {
+    position: absolute;
+    top: 15px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .hud-box {
+    background: rgba(8, 8, 22, 0.8);
+    border: 1px solid #00f3ff;
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: bold;
   }
 </style>
 </head>
 <body>
 
 <div id="gameContainer">
+  <div class="score-hud">
+    <div class="hud-box" style="color: #00f3ff;">RECORD : <span id="hudBest">0</span></div>
+    <div class="hud-box" style="color: #fff;">SCORE : <span id="hudScore">0</span></div>
+  </div>
+
   <div id="menuScreen" class="screen">
     <h1>UPWARD DROP</h1>
     <p>Tape pour changer de direction. Monte le plus haut possible !</p>
@@ -104,14 +129,18 @@ resize();
 let state = 'MENU';
 let score = 0;
 let bestScore = localStorage.getItem('upward_best') || 0;
+document.getElementById('hudBest').innerText = bestScore;
+
 let cameraY = 0;
+let baseSpeedX = 1.8;
+let baseSpeedY = -3.2;
 
 let ball = {
   x: canvas.width / 2,
-  y: canvas.height - 120,
+  y: canvas.height - 100,
   r: 10,
-  vx: 2.5,
-  vy: -4.5,
+  vx: baseSpeedX,
+  vy: baseSpeedY,
   trail: []
 };
 
@@ -133,34 +162,52 @@ for(let i=0; i<60; i++) {
 function initGame() {
   score = 0;
   cameraY = 0;
+  
+  // Vitesse initiale très tranquille (Niveau 1)
+  baseSpeedX = 1.8;
+  baseSpeedY = -3.2;
+
   ball.x = canvas.width / 2;
-  ball.y = canvas.height - 150;
-  ball.vx = 2.5;
-  ball.vy = -4.5;
+  ball.y = canvas.height - 100;
+  ball.vx = baseSpeedX;
+  ball.vy = baseSpeedY;
   ball.trail = [];
   obstacles = [];
-  for(let i = 0; i < 6; i++) {
-    spawnObstacle(canvas.height - 300 - (i * 200));
+
+  document.getElementById('hudScore').innerText = '0';
+  document.getElementById('hudBest').innerText = bestScore;
+
+  // On génère 5 barres au départ avec un grand passage facile et beaucoup d'espace
+  for(let i = 0; i < 5; i++) {
+    spawnObstacle(canvas.height - 280 - (i * 240));
   }
 }
 
 function spawnObstacle(yPos) {
-  let w = 130 + Math.random() * 60;
-  let x = Math.random() * (canvas.width - w - 40) + 20;
-  obstacles.push({ x: x, y: yPos, w: w, h: 14 });
+  // Plus le score monte, plus le passage se rétrécit légèrement
+  let difficultyFactor = Math.min(score / 300, 1);
+  let barWidth = (canvas.width * 0.55) - (difficultyFactor * 30); // Large barre facile au début
+  let x = Math.random() * (canvas.width - barWidth - 60) + 30;
+
+  obstacles.push({ x: x, y: yPos, w: barWidth, h: 14 });
 }
 
-document.getElementById('startBtn').onclick = () => {
+function startGame(e) {
+  if(e) e.preventDefault();
   document.getElementById('menuScreen').classList.add('hidden');
-  initGame();
-  state = 'PLAYING';
-};
-
-document.getElementById('restartBtn').onclick = () => {
   document.getElementById('gameOverScreen').classList.add('hidden');
   initGame();
   state = 'PLAYING';
-};
+}
+
+const startBtn = document.getElementById('startBtn');
+const restartBtn = document.getElementById('restartBtn');
+
+startBtn.addEventListener('click', startGame);
+startBtn.addEventListener('touchstart', startGame);
+
+restartBtn.addEventListener('click', startGame);
+restartBtn.addEventListener('touchstart', startGame);
 
 window.addEventListener('pointerdown', (e) => {
   if(state === 'PLAYING' && !e.target.closest('button')) {
@@ -171,30 +218,42 @@ window.addEventListener('pointerdown', (e) => {
 function update() {
   if (state !== 'PLAYING') return;
 
+  // Augmentation progressive de la vitesse en montant
+  let speedMultiplier = 1 + (score / 400); 
+  let currentVxSign = Math.sign(ball.vx) || 1;
+  
+  ball.vx = currentVxSign * (baseSpeedX * speedMultiplier);
+  ball.vy = baseSpeedY * speedMultiplier;
+
   ball.x += ball.vx;
   ball.y += ball.vy;
 
   ball.trail.push({x: ball.x, y: ball.y});
   if(ball.trail.length > 12) ball.trail.shift();
 
-  let currentHeightScore = Math.floor(-ball.y / 4);
-  if (currentHeightScore > score) score = currentHeightScore;
+  let currentHeightScore = Math.floor(-ball.y / 5);
+  if (currentHeightScore > score) {
+    score = currentHeightScore;
+    document.getElementById('hudScore').innerText = score;
+  }
 
-  colorHue = (180 + Math.floor(score / 40) * 25) % 360;
+  colorHue = (180 + Math.floor(score / 30) * 20) % 360;
 
   if (ball.x - ball.r <= 15) {
     ball.x = 15 + ball.r;
-    ball.vx *= -1;
+    ball.vx = Math.abs(ball.vx);
   } else if (ball.x + ball.r >= canvas.width - 15) {
     ball.x = canvas.width - 15 - ball.r;
-    ball.vx *= -1;
+    ball.vx = -Math.abs(ball.vx);
   }
 
-  let targetCameraY = ball.y - canvas.height * 0.45;
+  let targetCameraY = ball.y - canvas.height * 0.5;
   cameraY += (targetCameraY - cameraY) * 0.1;
 
-  if(obstacles.length > 0 && obstacles[obstacles.length - 1].y > cameraY - canvas.height) {
-    spawnObstacle(obstacles[obstacles.length - 1].y - 200);
+  let lastObstacleY = obstacles.length > 0 ? obstacles[obstacles.length - 1].y : cameraY;
+  if(lastObstacleY > cameraY - canvas.height) {
+    let spacing = Math.max(240 - (score / 5), 180); // Espacement progressif
+    spawnObstacle(lastObstacleY - spacing);
   }
 
   obstacles = obstacles.filter(o => o.y < cameraY + canvas.height + 100);
@@ -278,22 +337,6 @@ function draw() {
   ctx.shadowBlur = 0;
 
   ctx.restore();
-
-  if (state === 'PLAYING') {
-    ctx.fillStyle = 'rgba(8, 8, 22, 0.85)';
-    ctx.fillRect(canvas.width / 2 - 70, 15, 140, 45);
-    ctx.strokeStyle = `hsl(${colorHue}, 100%, 50%)`;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(canvas.width / 2 - 70, 15, 140, 45);
-
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 22px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = `hsl(${colorHue}, 100%, 50%)`;
-    ctx.fillText(score, canvas.width / 2, 45);
-    ctx.shadowBlur = 0;
-  }
 }
 
 function loop() {
