@@ -40,7 +40,7 @@ h2{font-size:1.6rem;font-weight:900;letter-spacing:2px;margin:0 0 10px;text-alig
 <div id="gameContainer">
   <div id="menuScreen" class="screen">
     <h1>UPWARD DROP</h1>
-    <div class="subtitle">GOLD EDITION · TEST GRATUIT</div>
+    <div class="subtitle">GOLD EDITION · HARDCORE COINS</div>
     <div class="stat-badge" id="menuBestBadge" style="color:#00f3ff"></div>
     <div class="stat-badge" id="menuCoinsBadge"></div>
     <button class="btn btn-primary" id="startBtn">JOUER</button>
@@ -49,7 +49,7 @@ h2{font-size:1.6rem;font-weight:900;letter-spacing:2px;margin:0 0 10px;text-alig
   </div>
   
   <div id="shopScreen" class="screen hidden">
-    <h2>BOUTIQUE (TEST)</h2>
+    <h2>BOUTIQUE</h2>
     <div class="shop-tabs">
       <div class="shop-tab active" id="tabTrails" onclick="switchShopTab('trails')">TRAÎNÉES</div>
       <div class="shop-tab" id="tabThemes" onclick="switchShopTab('themes')">THÈMES FOND</div>
@@ -105,24 +105,24 @@ let seen=[];try{seen=JSON.parse(localStorage.getItem('upward_seen'))||[]}catch(e
 let muted=load('upward_mute')===1,AC;
 
 let currentTrail=load('upward_trail')||0;
-// Déblocage 100% gratuit de tous les éléments de la boutique pour essais
-let unlockedTrails=[0,1,2,3];
+let unlockedTrails=JSON.parse(localStorage.getItem('upward_unlocked')||'[0]');
+
 let currentTheme=load('upward_bg_theme')||0;
-let unlockedThemes=[0,1,2,3];
+let unlockedThemes=JSON.parse(localStorage.getItem('upward_unlocked_themes')||'[0]');
 let shopTab='trails';
 
 const TRAILS=[
- {name:'Cyan Néon',color:'cyan'},
- {name:'Feu d\'Or',color:'gold'},
- {name:'Plasma Rose',color:'pink'},
- {name:'Arc-en-ciel',color:'rainbow'}
+ {name:'Cyan Néon',cost:0},
+ {name:'Feu d\'Or',cost:50},
+ {name:'Plasma Rose',cost:100},
+ {name:'Arc-en-ciel',cost:200}
 ];
 
 const BG_THEMES=[
- {name:'Classique Étoilé'},
- {name:'Grille Cyber 80s'},
- {name:'Pluie Matrix'},
- {name:'Vortex Espace'}
+ {name:'Classique Étoilé',cost:0},
+ {name:'Grille Cyber 80s',cost:80},
+ {name:'Pluie Matrix',cost:120},
+ {name:'Vortex Espace',cost:250}
 ];
 
 function beep(f,d,t,v){if(muted)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=t||'square';o.frequency.value=f;g.gain.value=v||.04;g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
@@ -171,23 +171,35 @@ function buildShop(){
   grid.innerHTML='';
   if(shopTab==='trails'){
     TRAILS.forEach((tr,idx)=>{
-      const active=currentTrail===idx;
+      const unlocked=unlockedTrails.includes(idx), active=currentTrail===idx;
       const div=document.createElement('div');
       div.className='shop-item'+(active?' active':'');
-      div.innerHTML=`<div style="font-weight:700;font-size:0.8rem;color:${active?'#ffd700':'#fff'}">${tr.name}</div><div style="font-size:0.7rem;margin-top:3px;color:#00f3ff">${active?'ÉQUIPÉ':'CHOISIR'}</div>`;
+      div.innerHTML=`<div style="font-weight:700;font-size:0.8rem;color:${active?'#ffd700':'#fff'}">${tr.name}</div><div style="font-size:0.7rem;margin-top:3px;color:${unlocked?'#00f3ff':'#889'}">${active?'ÉQUIPÉ':unlocked?'ACQUIS':tr.cost+' ●'}</div>`;
       div.onclick=()=>{
-        currentTrail=idx; save('upward_trail',idx); buildShop(); vibrate(20); beep(600,.1,'triangle',.04);
+        if(unlocked){ currentTrail=idx; save('upward_trail',idx); buildShop(); vibrate(20); }
+        else if(coins>=tr.cost){
+          coins-=tr.cost; save('upward_coins',coins);
+          unlockedTrails.push(idx); save('upward_unlocked',JSON.stringify(unlockedTrails));
+          currentTrail=idx; save('upward_trail',idx);
+          updateBadges(); buildShop(); vibrate(50); beep(880,.2,'triangle',.05);
+        } else { beep(220,.15,'sawtooth',.05); vibrate(100); }
       };
       grid.appendChild(div);
     });
   } else {
     BG_THEMES.forEach((th,idx)=>{
-      const active=currentTheme===idx;
+      const unlocked=unlockedThemes.includes(idx), active=currentTheme===idx;
       const div=document.createElement('div');
       div.className='shop-item'+(active?' active':'');
-      div.innerHTML=`<div style="font-weight:700;font-size:0.8rem;color:${active?'#ffd700':'#fff'}">${th.name}</div><div style="font-size:0.7rem;margin-top:3px;color:#00f3ff">${active?'ÉQUIPÉ':'CHOISIR'}</div>`;
+      div.innerHTML=`<div style="font-weight:700;font-size:0.8rem;color:${active?'#ffd700':'#fff'}">${th.name}</div><div style="font-size:0.7rem;margin-top:3px;color:${unlocked?'#00f3ff':'#889'}">${active?'ÉQUIPÉ':unlocked?'ACQUIS':th.cost+' ●'}</div>`;
       div.onclick=()=>{
-        currentTheme=idx; save('upward_bg_theme',idx); buildShop(); vibrate(20); beep(600,.1,'triangle',.04);
+        if(unlocked){ currentTheme=idx; save('upward_bg_theme',idx); buildShop(); vibrate(20); }
+        else if(coins>=th.cost){
+          coins-=th.cost; save('upward_coins',coins);
+          unlockedThemes.push(idx); save('upward_unlocked_themes',JSON.stringify(unlockedThemes));
+          currentTheme=idx; save('upward_bg_theme',idx);
+          updateBadges(); buildShop(); vibrate(50); beep(880,.2,'triangle',.05);
+        } else { beep(220,.15,'sawtooth',.05); vibrate(100); }
       };
       grid.appendChild(div);
     });
@@ -237,8 +249,14 @@ function spawnObstacle(y){
  else if(t===12||t===13||t===18||t===19){o.c=px}
  else if(t===17){o.gw=gw+10;o.c=px;o.d=(px<W/2?1:-1)*36;cx=px+2*o.d}
  else{o.c=Math.max(L+75,Math.min(R-75,px))}
- items.push({x:cx,y:y-55,r:8,got:false});
- if(Math.random()<.4)items.push({x:cx+(Math.random()<.5?-1:1)*30,y:y-95,r:8,got:false});
+
+ // --- ÉQUILIBRAGE DES PIÈCES (Plus rares et piégées sur les côtés) ---
+ if(Math.random()<0.22){
+  const sideOffset=(Math.random()<.5?-1:1)*(35+Math.random()*25);
+  const coinX=Math.max(L+20,Math.min(R-20, cx + sideOffset));
+  items.push({x:coinX, y:y-40, r:8, got:false});
+ }
+
  pathX=cx;obstacles.push(o);
 }
 function fillWorld(){while(nextY>cameraY-H-100){spawnObstacle(nextY);nextY-=Math.max(270-55*diff(),215)}}
@@ -387,7 +405,6 @@ function draw(){
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.globalAlpha=1;ctx.shadowBlur=0;
  const hue=currentWorld.hue,col='hsl('+hue+',100%,50%)',oc='hsl('+((hue+140)%360)+',100%,60%)',elec=!!currentWorld.pulse,pulse=elec?1-(T%30)/30:0;
  
- // Rendu du thème sélectionné
  if(currentTheme===1){ // Grille Cyber 80s
   ctx.fillStyle='#080212';ctx.fillRect(0,0,W,H);
   ctx.strokeStyle='rgba(255,0,127,0.25)';ctx.lineWidth=1;
