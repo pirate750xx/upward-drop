@@ -141,24 +141,23 @@ const MISS=[{t:'Atteins 1500 pts en Infini',g:1500},{t:'Ramasse 40 pièces',g:40
 
 const MODES=['INFINI','SPEEDRUN','HARDCORE','GOLD RUSH'];
 
-// MONDES 100% INDÉPENDANTS ET PROPRES À CHAQUE MODE (PLUS DE MÉLANGE)
 const WORLDS=[
- [ // 0. INFINI (Voyage spatial & Cyber néon lumineux)
+ [ 
   {name:'CYAN NÉON',bg1:'#03071e',bg2:'#0d1b2a',wall:'#00f3ff',obs:'#ff00aa',style:'grid'},
   {name:'PURPLE VORTEX',bg1:'#0d0221',bg2:'#240046',wall:'#e0aaff',obs:'#7b2cbf',style:'vortex'},
   {name:'CYBERPUNK',bg1:'#031926',bg2:'#15616d',wall:'#00f5d4',obs:'#f72585',style:'grid'}
  ],
- [ // 1. SPEEDRUN (Vitesse pure & Laser futuriste)
+ [ 
   {name:'SPRINT LASER',bg1:'#020d1c',bg2:'#04244d',wall:'#00f3ff',obs:'#ff00ff',style:'speed'},
   {name:'HYPERSPACE',bg1:'#09021c',bg2:'#2d044d',wall:'#9d4edd',obs:'#00ffff',style:'speed'},
   {name:'CYBER PULSE',bg1:'#021c12',bg2:'#044d2d',wall:'#00ff87',obs:'#ff007f',style:'speed'}
  ],
- [ // 2. HARDCORE (L'Enfer Magmatique pur & ardent)
+ [ 
   {name:'MAGMA BRÛLANT',bg1:'#1c0702',bg2:'#4a1204',wall:'#ff4400',obs:'#ffcc00',style:'fire'},
   {name:'BRASIER ARDENT',bg1:'#1c0202',bg2:'#4d0404',wall:'#ff0000',obs:'#ffaa00',style:'fire'},
   {name:'ABYSSES DE FEU',bg1:'#1a0000',bg2:'#3d0000',wall:'#ff3300',obs:'#ff0055',style:'fire'}
  ],
- [ // 3. GOLD RUSH (Ruée vers l'or & Trésor royal)
+ [ 
   {name:'OR PUR',bg1:'#1c1702',bg2:'#4d3f04',wall:'#ffd700',obs:'#ffaa00',style:'gold'},
   {name:'TEMPLE DORÉ',bg1:'#1c1202',bg2:'#4d2c04',wall:'#ffc000',obs:'#ff5500',style:'gold'},
   {name:'COFFRE ROYAL',bg1:'#14140c',bg2:'#38381c',wall:'#ffee44',obs:'#00ffaa',style:'gold'}
@@ -352,7 +351,7 @@ function finish(kind){
   $('goL4').innerText=msg;$('goL4').classList.toggle('hidden',!msg);
   const can=kind==='dead'&&gameMode!==2&&reviveCount<MAXREV;
   $('rvCoin').classList.toggle('hidden',!can||reviveCount>0);$('rvAd').classList.toggle('hidden',!can);
-  $('rvCoin').innerText='REVIVRE · 25 ●';$('rvCoin'].disabled=coins<25;$('rvAd').innerText=reviveCount>0?'REVIVRE (PUB OBLIGATOIRE)':'REVIVRE (PUB)';
+  $('rvCoin').innerText='REVIVRE · 25 ●';$('rvCoin').disabled=coins<25;$('rvAd').innerText=reviveCount>0?'REVIVRE (PUB OBLIGATOIRE)':'REVIVRE (PUB)';
   showOnly('gameOverScreen');state='GAMEOVER';
  },win?900:650);
 }
@@ -370,9 +369,18 @@ function share(){
  if(navigator.share)navigator.share({text:txt,url:location.href}).catch(()=>{});
  else if(navigator.clipboard)navigator.clipboard.writeText(txt+' '+location.href).then(()=>{$('shareBtn').innerText='COPIÉ !'}).catch(()=>{});
 }
-function on(id,fn){$(id).addEventListener('click',function(e){e.stopPropagation();vib(15);fn()})}
-document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();vib(15);startGame(+b.getAttribute('data-mode'))}));
-document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();updateBadges();showOnly('menuScreen')}));
+function on(id,fn){const el=$(id);if(el)el.addEventListener('click',function(e){e.stopPropagation();vib(15);fn()})}
+
+// CORRECTION DIRECTE DES CLICS SUR LES BOUTONS DE MODE ET MENU
+document.querySelectorAll('[data-mode]').forEach(b=>{
+ b.addEventListener('click',e=>{e.stopPropagation();vib(15);startGame(+b.getAttribute('data-mode'))});
+ b.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();vib(15);startGame(+b.getAttribute('data-mode'))});
+});
+document.querySelectorAll('[data-back]').forEach(b=>{
+ b.addEventListener('click',e=>{e.stopPropagation();updateBadges();showOnly('menuScreen')});
+ b.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();updateBadges();showOnly('menuScreen')});
+});
+
 let shopTab='t';
 on('shopBtn',()=>{buildShop(shopTab);showOnly('shopScreen')});on('defisBtn',()=>{buildDefis();showOnly('defisScreen')});on('setBtn',()=>{refreshSet();showOnly('settingsScreen')});
 on('tabT',()=>{shopTab='t';buildShop('t')});on('tabB',()=>{shopTab='b';buildShop('b')});on('tabS',()=>{shopTab='s';buildShop('s')});on('giftBtn',claimGift);
@@ -485,13 +493,11 @@ function draw(){
  const mc=currentWorld.wall||'#5cf7ff';
  const oc=currentWorld.obs||'#ff4fd8';
  
- // FOND FLUIDE ÉPURÉ ET LUMINEUX (SANS AUCUN CARRÉ/ÉTOILE PARASITE)
  const bgGrad=ctx.createRadialGradient(W*.5,H*.3,10,W*.5,H*.5,W*1.2);
  bgGrad.addColorStop(0,currentWorld.bg2);
  bgGrad.addColorStop(1,currentWorld.bg1);
  ctx.fillStyle=bgGrad;ctx.fillRect(0,0,W,H);
 
- // EFFET DE LIGNES LUMINEUSES MODERNES TRÈS DISCRET SELON LE STYLE DU MONDE
  const st=currentWorld.style;
  if(st==='grid'||st==='vortex'){
   ctx.strokeStyle=mc;ctx.globalAlpha=0.04;ctx.lineWidth=1;
@@ -510,7 +516,6 @@ function draw(){
  if(shake>.3)ctx.translate((Math.random()-.5)*shake*2,(Math.random()-.5)*shake*2);
  ctx.translate(0,-cameraY);
  
- // MURS LATÉRAUX LUMINEUX
  ctx.strokeStyle=mc;ctx.lineWidth=4;ctx.shadowBlur=sh(22);ctx.shadowColor=mc;
  ctx.beginPath();ctx.moveTo(WM,cameraY-40);ctx.lineTo(WM,cameraY+H+40);ctx.moveTo(W-WM,cameraY-40);ctx.lineTo(W-WM,cameraY+H+40);ctx.stroke();
  
