@@ -40,7 +40,7 @@ h2{font-size:1.6rem;font-weight:900;letter-spacing:2px;margin:0 0 10px;text-alig
 <div id="gameContainer">
   <div id="menuScreen" class="screen">
     <h1>UPWARD DROP</h1>
-    <div class="subtitle">GOLD EDITION · HARDCORE COINS</div>
+    <div class="subtitle">GOLD EDITION · BALANCED COINS</div>
     <div class="stat-badge" id="menuBestBadge" style="color:#00f3ff"></div>
     <div class="stat-badge" id="menuCoinsBadge"></div>
     <button class="btn btn-primary" id="startBtn">JOUER</button>
@@ -250,11 +250,17 @@ function spawnObstacle(y){
  else if(t===17){o.gw=gw+10;o.c=px;o.d=(px<W/2?1:-1)*36;cx=px+2*o.d}
  else{o.c=Math.max(L+75,Math.min(R-75,px))}
 
- // --- ÉQUILIBRAGE DES PIÈCES (Plus rares et piégées sur les côtés) ---
- if(Math.random()<0.22){
-  const sideOffset=(Math.random()<.5?-1:1)*(35+Math.random()*25);
-  const coinX=Math.max(L+20,Math.min(R-20, cx + sideOffset));
-  items.push({x:coinX, y:y-40, r:8, got:false});
+ // --- LE JUSTE MILIEU POUR LES PIÈCES (Taux 30%) ---
+ if(Math.random()<0.30){
+  let coinX;
+  if(Math.random()<0.70){
+   // 70% Pièces fluides (Légèrement décalées du centre pour rester attractives)
+   coinX = Math.max(L+25, Math.min(R-25, cx + (Math.random()<.5?-1:1)*18));
+  } else {
+   // 30% Pièces "Risque" (Décalées plus loin vers les zones dangereuses)
+   coinX = Math.max(L+15, Math.min(R-15, cx + (Math.random()<.5?-1:1)*45));
+  }
+  items.push({x:coinX, y:y-45, r:8, got:false});
  }
 
  pathX=cx;obstacles.push(o);
@@ -405,24 +411,24 @@ function draw(){
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.globalAlpha=1;ctx.shadowBlur=0;
  const hue=currentWorld.hue,col='hsl('+hue+',100%,50%)',oc='hsl('+((hue+140)%360)+',100%,60%)',elec=!!currentWorld.pulse,pulse=elec?1-(T%30)/30:0;
  
- if(currentTheme===1){ // Grille Cyber 80s
+ if(currentTheme===1){
   ctx.fillStyle='#080212';ctx.fillRect(0,0,W,H);
   ctx.strokeStyle='rgba(255,0,127,0.25)';ctx.lineWidth=1;
   const off=(T*1.5)%30;
   for(let y=off;y<H;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
- } else if(currentTheme===2){ // Pluie Matrix
+ } else if(currentTheme===2){
   ctx.fillStyle='#020804';ctx.fillRect(0,0,W,H);
   stars.forEach(s=>{
    ctx.fillStyle='rgba(0,255,100,0.45)';ctx.fillRect(s.x,(s.y*2)%H,2,14);
   });
- } else if(currentTheme===3){ // Vortex Espace
+ } else if(currentTheme===3){
   ctx.fillStyle='#020208';ctx.fillRect(0,0,W,H);
   stars.forEach(s=>{
    const dist=Math.hypot(s.x-W/2, s.y-H/2);
    ctx.fillStyle='rgba(255,255,255,'+(0.2+Math.sin(T*0.05+dist)*0.3)+')';
    ctx.fillRect(s.x,s.y,s.size*1.5,s.size*1.5);
   });
- } else { // Classique Etoilé
+ } else {
   ctx.fillStyle=currentWorld.bg;ctx.fillRect(0,0,W,H);
   if(elec){ctx.fillStyle='hsla('+hue+',100%,60%,'+(.12*pulse)+')';ctx.fillRect(0,0,W,H)}
   stars.forEach(function(s){
