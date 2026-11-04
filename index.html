@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Upward Drop - Synthwave Arcade</title>
+<title>Upward Drop - Synthwave Gold</title>
 <style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
     margin: 0;
-    background: #05050a;
+    background: #030308;
     color: #fff;
-    font-family: sans-serif;
+    font-family: 'Segoe UI', Roboto, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -23,77 +24,97 @@
     max-width: 420px;
     height: 100%;
     max-height: 850px;
-    box-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
+    box-shadow: 0 0 40px rgba(0, 243, 255, 0.25);
     overflow: hidden;
+    background: #060612;
   }
   canvas {
     display: block;
     width: 100%;
     height: 100%;
-    background: #080816;
   }
   .screen {
     position: absolute;
     inset: 0;
-    background: rgba(8, 8, 22, 0.95);
+    background: rgba(5, 5, 16, 0.92);
+    backdrop-filter: blur(8px);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     z-index: 10;
+    padding: 20px;
   }
-  .hidden {
-    display: none !important;
-  }
+  .hidden { display: none !important; }
   h1 {
-    font-size: 2.2rem;
-    color: #ff007f;
-    text-shadow: 0 0 15px #ff007f;
-    margin-bottom: 5px;
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #00f3ff;
+    text-shadow: 0 0 20px rgba(0, 243, 255, 0.8);
+    margin: 0 0 5px 0;
     text-align: center;
   }
-  p {
-    color: #a0a0c0;
+  .subtitle {
+    color: #8899ac;
+    font-size: 0.95rem;
     margin-bottom: 25px;
     text-align: center;
-    padding: 0 20px;
+  }
+  .stat-badge {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 243, 255, 0.3);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #ffd700;
+    margin-bottom: 12px;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.15);
   }
   .btn {
     background: transparent;
     border: 2px solid #00f3ff;
-    padding: 15px 40px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    border-radius: 30px;
+    padding: 16px 45px;
+    font-size: 1.15rem;
+    font-weight: 800;
+    border-radius: 35px;
     color: #00f3ff;
-    box-shadow: 0 0 20px rgba(0, 243, 255, 0.4);
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
     cursor: pointer;
-    margin: 10px 0;
-    width: 80%;
-    max-width: 250px;
+    margin: 8px 0;
+    width: 85%;
+    max-width: 260px;
     text-align: center;
-    z-index: 20;
+    transition: transform 0.1s, box-shadow 0.2s;
   }
   .btn-primary {
     background: linear-gradient(135deg, #00f3ff, #0066ff);
     color: #000;
     border: none;
+    box-shadow: 0 0 25px rgba(0, 243, 255, 0.6);
   }
+  .btn:active { transform: scale(0.96); }
 </style>
 </head>
 <body>
 
 <div id="gameContainer">
+  <!-- Menu Principal avec affichage du Record -->
   <div id="menuScreen" class="screen">
     <h1>UPWARD DROP</h1>
-    <p>Tape pour changer de direction, commence doucement et survis le plus longtemps possible !</p>
+    <div class="subtitle">TAP POUR CHANGER DE DIRECTION</div>
+    <div class="stat-badge" id="menuBestBadge">RECORD À BATTRE : 0</div>
+    <div class="stat-badge" style="color: #ffd700; border-color: rgba(255, 215, 0, 0.4);" id="menuCoinsBadge">PIÈCES : 0</div>
     <button class="btn btn-primary" id="startBtn">JOUER</button>
   </div>
 
+  <!-- Écran Game Over -->
   <div id="gameOverScreen" class="screen hidden">
-    <h1>GAME OVER</h1>
-    <p id="finalScoreText" style="font-size: 1.3rem; color: #fff; margin-bottom: 10px;">Score : 0</p>
-    <p id="finalCoinsText" style="color: #ffd700; margin-bottom: 25px;">Pièces : 0</p>
+    <h1 style="color: #ff007f; text-shadow: 0 0 20px #ff007f;">GAME OVER</h1>
+    <div class="stat-badge" style="color: #fff; border-color: #ff007f;" id="finalScoreText">SCORE : 0</div>
+    <div class="stat-badge" style="color: #00f3ff;" id="bestScoreText">MEILLEUR RECORD : 0</div>
+    <div class="stat-badge" style="color: #ffd700;" id="finalCoinsText">PIÈCES TOTALES : 0</div>
     <button class="btn btn-primary" id="restartBtn">REJOUER</button>
     <button class="btn" id="menuBtn">MENU</button>
   </div>
@@ -118,90 +139,111 @@ let coins = parseInt(localStorage.getItem('upward_coins')) || 0;
 let bestScore = parseInt(localStorage.getItem('upward_best')) || 0;
 let cameraY = 0;
 
+// Palettes de couleurs selon les mondes
+const WORLDS = [
+  { name: "CYAN NEON", hue: 180, bg: '#060612' },
+  { name: "MAGENTA SYNTH", hue: 320, bg: '#100512' },
+  { name: "GOLDEN AMBER", hue: 45, bg: '#120f05' },
+  { name: "PURPLE MATRIX", hue: 270, bg: '#0b0512' },
+  { name: "EMERALD GRID", hue: 140, bg: '#05120a' }
+];
+
+let currentWorld = WORLDS[0];
+
 let ball = {
   x: canvas.width / 2,
   y: canvas.height - 100,
-  r: 10,
-  vx: 1.8,  // Vitesse de départ très douce
-  vy: -2.5, // Montée lente et maîtrisée
+  r: 9,
+  vx: 1.3,  // Vitesse initiale très calme et abordable
+  vy: -2.0, // Montée lente au Niveau 1
   trail: []
 };
 
 let obstacles = [];
 let items = [];
 let stars = [];
-let colorHue = 180;
 
-for(let i=0; i<60; i++) {
+// Initialisation du starfield de fond
+for(let i = 0; i < 70; i++) {
   stars.push({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
     size: Math.random() * 2 + 0.5,
-    speed: Math.random() * 0.6 + 0.2,
-    shooting: Math.random() > 0.8,
-    length: 25 + Math.random() * 25
+    speed: Math.random() * 0.5 + 0.1,
+    shooting: Math.random() > 0.85,
+    length: 20 + Math.random() * 30
   });
 }
+
+function updateBadges() {
+  document.getElementById('menuBestBadge').innerText = "RECORD À BATTRE : " + bestScore;
+  document.getElementById('menuCoinsBadge').innerText = "PIÈCES TOTALES : " + coins;
+}
+updateBadges();
 
 function initGame() {
   score = 0;
   cameraY = 0;
+  
+  // Vitesse de départ fluide et très accessible
   ball.x = canvas.width / 2;
   ball.y = canvas.height - 100;
-  ball.vx = 1.8;
-  ball.vy = -2.5;
+  ball.vx = 1.3;
+  ball.vy = -2.0;
   ball.trail = [];
+  
   obstacles = [];
   items = [];
+  currentWorld = WORLDS[0];
 
-  // Barres espacées généreusement au départ pour un Niveau 1 très accessible
+  // Premier obstacle bien haut pour un grand espace libre au départ
   for(let i = 0; i < 5; i++) {
-    spawnObstacle(canvas.height - 300 - (i * 260), i);
+    spawnObstacle(canvas.height - 320 - (i * 270), i);
   }
 }
 
 function spawnObstacle(yPos, index) {
-  let currentLevel = Math.floor(score / 40) + 1;
+  let level = Math.floor(score / 50) + 1;
   let type = 0;
 
-  // Variété d'obstacles qui n'apparaît qu'après le niveau 3 ou 4
-  if (currentLevel >= 4) {
+  // On n'introduit la variété de formes qu'à partir du niveau 3 ou 4
+  if (level >= 3) {
     let rand = Math.random();
-    if (rand < 0.5) type = 0;
-    else if (rand < 0.8) type = 1;
-    else type = 2;
+    if (rand < 0.5) type = 0;      // Barre avec ouverture
+    else if (rand < 0.8) type = 1; // Slalom latéral
+    else type = 2;                 // Blocs décalés
   }
 
   let obs = { y: yPos, h: 14, type: type, parts: [] };
 
   if (type === 0) {
-    let gapWidth = Math.max(120 - (currentLevel * 2), 80);
+    let gapWidth = Math.max(130 - (level * 2.5), 85); // Passage large au départ
     let gapX = Math.random() * (canvas.width - gapWidth - 60) + 30;
     obs.parts.push({ x: 15, w: gapX - 15 });
     obs.parts.push({ x: gapX + gapWidth, w: (canvas.width - 15) - (gapX + gapWidth) });
 
     if (Math.random() > 0.3) {
-      items.push({ x: gapX + gapWidth / 2, y: yPos - 40, r: 8, collected: false });
+      items.push({ x: gapX + gapWidth / 2, y: yPos - 45, r: 8, collected: false });
     }
   } 
   else if (type === 1) {
-    let w1 = 70 + Math.random() * 30;
-    let w2 = 70 + Math.random() * 30;
+    let w1 = 65 + Math.random() * 35;
+    let w2 = 65 + Math.random() * 35;
     obs.parts.push({ x: 15, w: w1 });
     obs.parts.push({ x: canvas.width - 15 - w2, w: w2 });
 
     if (Math.random() > 0.4) {
-      items.push({ x: canvas.width / 2, y: yPos - 40, r: 8, collected: false });
+      items.push({ x: canvas.width / 2, y: yPos - 45, r: 8, collected: false });
     }
   } 
   else {
-    let centerW = Math.max(80 - (currentLevel * 2), 45);
+    let centerW = Math.max(85 - (level * 2), 50);
     let centerX = (canvas.width - centerW) / 2;
     obs.parts.push({ x: centerX, w: centerW });
 
     if (Math.random() > 0.3) {
-      items.push({ x: centerX - 35, y: yPos - 40, r: 8, collected: false });
-      items.push({ x: centerX + centerW + 35, y: yPos - 40, r: 8, collected: false });
+      items.push({ x: centerX - 35, y: yPos - 45, r: 8, collected: false });
+      items.push({ x: centerX + centerW + 35, y: yPos - 45, r: 8, collected: false });
     }
   }
 
@@ -218,19 +260,15 @@ function startGame(e) {
 
 function showMenu(e) {
   if(e) e.preventDefault();
+  updateBadges();
   document.getElementById('gameOverScreen').classList.add('hidden');
   document.getElementById('menuScreen').classList.remove('hidden');
   state = 'MENU';
 }
 
-document.getElementById('startBtn').addEventListener('click', startGame);
-document.getElementById('startBtn').addEventListener('touchstart', startGame);
-
-document.getElementById('restartBtn').addEventListener('click', startGame);
-document.getElementById('restartBtn').addEventListener('touchstart', startGame);
-
-document.getElementById('menuBtn').addEventListener('click', showMenu);
-document.getElementById('menuBtn').addEventListener('touchstart', showMenu);
+document.getElementById('startBtn').onclick = startGame;
+document.getElementById('restartBtn').onclick = startGame;
+document.getElementById('menuBtn').onclick = showMenu;
 
 window.addEventListener('pointerdown', (e) => {
   if(state === 'PLAYING' && !e.target.closest('button')) {
@@ -241,23 +279,27 @@ window.addEventListener('pointerdown', (e) => {
 function update() {
   if (state !== 'PLAYING') return;
 
-  // Accélération extrêmement douce : la vitesse ne commence à monter qu'après un gros score
-  let speedMult = 1 + (score / 1200); 
+  // Accélération douce et très étalée sur les niveaux
+  let speedMult = 1 + (score / 1500); 
   let currentDir = Math.sign(ball.vx) || 1;
-  ball.vx = currentDir * (1.8 * speedMult);
-  ball.vy = -2.5 * speedMult;
+  ball.vx = currentDir * (1.3 * speedMult);
+  ball.vy = -2.0 * speedMult;
 
   ball.x += ball.vx;
   ball.y += ball.vy;
 
+  // Traînée lumineuse fluide
   ball.trail.push({x: ball.x, y: ball.y});
-  if(ball.trail.length > 12) ball.trail.shift();
+  if(ball.trail.length > 16) ball.trail.shift();
 
   let currentHeightScore = Math.floor(-ball.y / 6);
   if (currentHeightScore > score) score = currentHeightScore;
 
-  colorHue = (180 + Math.floor(score / 50) * 20) % 360;
+  // Changement dynamique de monde/décor tous les 100 points
+  let worldIndex = Math.floor(score / 100) % WORLDS.length;
+  currentWorld = WORLDS[worldIndex];
 
+  // Rebond latéral
   if (ball.x - ball.r <= 15) {
     ball.x = 15 + ball.r;
     ball.vx = Math.abs(ball.vx);
@@ -271,13 +313,14 @@ function update() {
 
   let lastY = obstacles.length > 0 ? obstacles[obstacles.length - 1].y : cameraY;
   if(lastY > cameraY - canvas.height) {
-    let spacing = Math.max(260 - (score / 8), 190);
+    let spacing = Math.max(270 - (score / 10), 200);
     spawnObstacle(lastY - spacing, obstacles.length);
   }
 
   obstacles = obstacles.filter(o => o.y < cameraY + canvas.height + 100);
   items = items.filter(it => it.y < cameraY + canvas.height + 100);
 
+  // Ramassage pièces
   items.forEach(it => {
     if (!it.collected) {
       let dist = Math.hypot(ball.x - it.x, ball.y - it.y);
@@ -289,6 +332,7 @@ function update() {
     }
   });
 
+  // Collisions
   obstacles.forEach(o => {
     if (ball.y + ball.r > o.y && ball.y - ball.r < o.y + o.h) {
       o.parts.forEach(part => {
@@ -298,8 +342,9 @@ function update() {
             bestScore = score;
             localStorage.setItem('upward_best', bestScore);
           }
-          document.getElementById('finalScoreText').innerText = "Score : " + score;
-          document.getElementById('finalCoinsText').innerText = "Pièces gagnées : " + coins;
+          document.getElementById('finalScoreText').innerText = "SCORE : " + score;
+          document.getElementById('bestScoreText').innerText = "MEILLEUR RECORD : " + bestScore;
+          document.getElementById('finalCoinsText').innerText = "PIÈCES TOTALES : " + coins;
           document.getElementById('gameOverScreen').classList.remove('hidden');
         }
       });
@@ -310,21 +355,23 @@ function update() {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  ctx.fillStyle = '#080816';
+  // Fond du monde actuel
+  ctx.fillStyle = currentWorld.bg;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // Étoiles et étoiles filantes
   stars.forEach(s => {
     s.y += s.speed;
     if (s.y > canvas.height) { s.y = 0; s.x = Math.random() * canvas.width; }
     if(s.shooting) {
-      ctx.strokeStyle = `hsl(${colorHue}, 100%, 70%)`;
+      ctx.strokeStyle = `hsl(${currentWorld.hue}, 100%, 70%)`;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(s.x, s.y);
       ctx.lineTo(s.x - s.length, s.y - s.length);
       ctx.stroke();
     } else {
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
       ctx.fillRect(s.x, s.y, s.size, s.size);
     }
   });
@@ -332,29 +379,35 @@ function draw() {
   ctx.save();
   ctx.translate(0, -cameraY);
 
-  ctx.strokeStyle = `hsl(${colorHue}, 100%, 50%)`;
+  // Murs verticaux néon
+  ctx.strokeStyle = `hsl(${currentWorld.hue}, 100%, 50%)`;
   ctx.lineWidth = 4;
+  ctx.shadowBlur = 12;
+  ctx.shadowColor = ctx.strokeStyle;
   ctx.beginPath();
   ctx.moveTo(15, cameraY);
   ctx.lineTo(15, cameraY + canvas.height);
   ctx.moveTo(canvas.width - 15, cameraY);
   ctx.lineTo(canvas.width - 15, cameraY + canvas.height);
   ctx.stroke();
+  ctx.shadowBlur = 0;
 
+  // Obstacles illuminés
   obstacles.forEach(o => {
-    ctx.fillStyle = '#ff007f';
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = '#ff007f';
+    ctx.fillStyle = `hsl(${(currentWorld.hue + 140) % 360}, 100%, 60%)`;
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = ctx.fillStyle;
     o.parts.forEach(part => {
       ctx.fillRect(part.x, o.y, part.w, o.h);
     });
     ctx.shadowBlur = 0;
   });
 
+  // Pièces d'or
   items.forEach(it => {
     if (!it.collected) {
       ctx.fillStyle = '#ffd700';
-      ctx.shadowBlur = 12;
+      ctx.shadowBlur = 14;
       ctx.shadowColor = '#ffd700';
       ctx.beginPath();
       ctx.arc(it.x, it.y, it.r, 0, Math.PI * 2);
@@ -363,18 +416,20 @@ function draw() {
     }
   });
 
-  for(let i=0; i<ball.trail.length; i++) {
+  // Traînée réaliste sous la balle
+  for(let i = 0; i < ball.trail.length; i++) {
     let t = ball.trail[i];
-    let alpha = i / ball.trail.length;
-    ctx.fillStyle = `hsla(${colorHue}, 100%, 50%, ${alpha * 0.5})`;
+    let ratio = i / ball.trail.length;
+    ctx.fillStyle = `hsla(${currentWorld.hue}, 100%, 60%, ${ratio * 0.6})`;
     ctx.beginPath();
-    ctx.arc(t.x, t.y, ball.r * (i / ball.trail.length), 0, Math.PI * 2);
+    ctx.arc(t.x, t.y, ball.r * ratio, 0, Math.PI * 2);
     ctx.fill();
   }
 
+  // Balle joueur Gold / Glow
   ctx.fillStyle = '#ffffff';
-  ctx.shadowBlur = 15;
-  ctx.shadowColor = '#00f3ff';
+  ctx.shadowBlur = 20;
+  ctx.shadowColor = `hsl(${currentWorld.hue}, 100%, 50%)`;
   ctx.beginPath();
   ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
   ctx.fill();
@@ -382,26 +437,30 @@ function draw() {
 
   ctx.restore();
 
+  // Interface HUD en haut
   if (state === 'PLAYING') {
-    ctx.fillStyle = 'rgba(8, 8, 22, 0.85)';
-    ctx.fillRect(15, 15, 90, 40);
-    ctx.strokeStyle = `hsl(${colorHue}, 100%, 50%)`;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(15, 15, 90, 40);
+    let currentLevel = Math.floor(score / 50) + 1;
+
+    // Badge Score à gauche
+    ctx.fillStyle = 'rgba(5, 5, 16, 0.85)';
+    ctx.fillRect(20, 20, 100, 38);
+    ctx.strokeStyle = `hsl(${currentWorld.hue}, 100%, 50%)`;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(20, 20, 100, 38);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 18px sans-serif';
+    ctx.font = 'bold 16px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(score, 60, 42);
+    ctx.fillText(`SCORE ${score}`, 70, 44);
 
-    let currentLevel = Math.floor(score / 40) + 1;
-    ctx.fillStyle = 'rgba(8, 8, 22, 0.85)';
-    ctx.fillRect(canvas.width - 145, 15, 130, 40);
-    ctx.strokeRect(canvas.width - 145, 15, 130, 40);
+    // Badge Monde / Niveau à droite
+    ctx.fillStyle = 'rgba(5, 5, 16, 0.85)';
+    ctx.fillRect(canvas.width - 150, 20, 130, 38);
+    ctx.strokeRect(canvas.width - 150, 20, 130, 38);
 
-    ctx.fillStyle = '#ff007f';
+    ctx.fillStyle = `hsl(${currentWorld.hue}, 100%, 70%)`;
     ctx.font = 'bold 13px sans-serif';
-    ctx.fillText(`NIV.${currentLevel}`, canvas.width - 80, 41);
+    ctx.fillText(`NIV.${currentLevel} - MONDE`, canvas.width - 85, 44);
   }
 }
 
