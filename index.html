@@ -16,9 +16,9 @@ canvas{display:block;width:100%;height:100%}
 .screen{position:absolute;inset:0;background:rgba(5,5,16,.94);backdrop-filter:blur(8px);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:10;padding:20px}
 .hidden{display:none!important}
 h1{font-size:2.4rem;font-weight:900;letter-spacing:3px;margin:0 0 4px;text-align:center;background:linear-gradient(90deg,#00f3ff,#ff00cc,#ffd700);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(0,243,255,.5))}
-h2{font-size:1.8rem;font-weight:900;letter-spacing:2px;margin:0 0 12px;text-align:center}
-.subtitle{color:#8899ac;font-size:.85rem;margin-bottom:16px;text-align:center;letter-spacing:1px}
-.stat-badge{background:rgba(255,255,255,.05);border:1px solid rgba(0,243,255,.3);padding:7px 18px;border-radius:20px;font-size:.9rem;font-weight:700;color:#ffd700;margin-bottom:8px}
+h2{font-size:1.6rem;font-weight:900;letter-spacing:2px;margin:0 0 10px;text-align:center}
+.subtitle{color:#8899ac;font-size:.8rem;margin-bottom:12px;text-align:center;letter-spacing:1px}
+.stat-badge{background:rgba(255,255,255,.05);border:1px solid rgba(0,243,255,.3);padding:6px 16px;border-radius:20px;font-size:0.85rem;font-weight:700;color:#ffd700;margin-bottom:6px}
 .btn{background:transparent;border:2px solid #00f3ff;padding:11px 30px;font-size:.95rem;font-weight:800;border-radius:35px;color:#00f3ff;box-shadow:0 0 18px rgba(0,243,255,.3);cursor:pointer;margin:5px 0;width:85%;max-width:260px;text-align:center;font-family:inherit;letter-spacing:1px}
 .btn-primary{background:linear-gradient(135deg,#00f3ff,#0066ff);color:#000;border:none;box-shadow:0 0 25px rgba(0,243,255,.6)}
 .btn-gold{border-color:#ffd700;color:#ffd700;box-shadow:0 0 16px rgba(255,215,0,.35)}
@@ -26,8 +26,11 @@ h2{font-size:1.8rem;font-weight:900;letter-spacing:2px;margin:0 0 12px;text-alig
 .btn-small{padding:7px 20px;font-size:.75rem;border-color:#556;color:#99a;box-shadow:none}
 .btn:active{transform:scale(.96)}
 .btn:disabled{opacity:.35}
-.shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:280px;margin-bottom:12px}
-.shop-item{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.15);padding:10px;border-radius:12px;text-align:center;cursor:pointer}
+.shop-tabs{display:flex;gap:8px;margin-bottom:10px}
+.shop-tab{background:rgba(255,255,255,.05);border:1px solid #445;padding:6px 14px;border-radius:12px;font-size:0.75rem;cursor:pointer;color:#aaa}
+.shop-tab.active{border-color:#00f3ff;color:#00f3ff;background:rgba(0,243,255,.1)}
+.shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:280px;margin-bottom:10px;max-height:200px;overflow-y:auto}
+.shop-item{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.15);padding:8px;border-radius:10px;text-align:center;cursor:pointer}
 .shop-item.active{border-color:#ffd700;background:rgba(255,215,0,.1)}
 #fake{width:240px;height:140px;border:2px dashed #ffd700;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#ffd700;font-size:1.2rem;margin:12px 0;background:repeating-linear-gradient(45deg,rgba(255,215,0,.08),rgba(255,215,0,.08) 10px,transparent 10px,transparent 20px)}
 </style>
@@ -37,17 +40,20 @@ h2{font-size:1.8rem;font-weight:900;letter-spacing:2px;margin:0 0 12px;text-alig
 <div id="gameContainer">
   <div id="menuScreen" class="screen">
     <h1>UPWARD DROP</h1>
-    <div class="subtitle">GOLD EDITION · SKILL & ARCADE</div>
+    <div class="subtitle">GOLD EDITION · TEST GRATUIT</div>
     <div class="stat-badge" id="menuBestBadge" style="color:#00f3ff"></div>
     <div class="stat-badge" id="menuCoinsBadge"></div>
     <button class="btn btn-primary" id="startBtn">JOUER</button>
-    <button class="btn btn-gold" id="openShopBtn">BOUTIQUE SKINS</button>
+    <button class="btn btn-gold" id="openShopBtn">BOUTIQUE & THÈMES</button>
     <button class="btn btn-small sndBtn"></button>
   </div>
   
   <div id="shopScreen" class="screen hidden">
-    <h2>TRAÎNÉES</h2>
-    <div class="subtitle">CHOISIS TON STYLE</div>
+    <h2>BOUTIQUE (TEST)</h2>
+    <div class="shop-tabs">
+      <div class="shop-tab active" id="tabTrails" onclick="switchShopTab('trails')">TRAÎNÉES</div>
+      <div class="shop-tab" id="tabThemes" onclick="switchShopTab('themes')">THÈMES FOND</div>
+    </div>
     <div class="shop-grid" id="shopGrid"></div>
     <button class="btn btn-primary" id="closeShopBtn">RETOUR</button>
   </div>
@@ -64,8 +70,8 @@ h2{font-size:1.8rem;font-weight:900;letter-spacing:2px;margin:0 0 12px;text-alig
     <div class="stat-badge" style="color:#fff;border-color:#ff007f" id="finalScoreText"></div>
     <div class="stat-badge" style="color:#00f3ff" id="bestScoreText"></div>
     <div class="stat-badge" id="finalCoinsText"></div>
-    <button class="btn btn-gold" id="reviveCoinBtn">REVIVRE (25 ●)</button>
-    <button class="btn btn-pink" id="reviveAdBtn">PUB POUR REVIVRE</button>
+    <button class="btn btn-gold" id="reviveCoinBtn">REVIVRE : 25 ● (1/2)</button>
+    <button class="btn btn-pink" id="reviveAdBtn">PUB POUR REVIVRE (2/2)</button>
     <button class="btn btn-primary" id="restartBtn">REJOUER</button>
     <button class="btn" id="menuBtn">MENU</button>
   </div>
@@ -97,14 +103,26 @@ function vibrate(ms){if(navigator.vibrate)try{navigator.vibrate(ms)}catch(e){}}
 
 let seen=[];try{seen=JSON.parse(localStorage.getItem('upward_seen'))||[]}catch(e){}
 let muted=load('upward_mute')===1,AC;
+
 let currentTrail=load('upward_trail')||0;
-let unlockedTrails=JSON.parse(localStorage.getItem('upward_unlocked')||'[0]');
+// Déblocage 100% gratuit de tous les éléments de la boutique pour essais
+let unlockedTrails=[0,1,2,3];
+let currentTheme=load('upward_bg_theme')||0;
+let unlockedThemes=[0,1,2,3];
+let shopTab='trails';
 
 const TRAILS=[
- {name:'Cyan Néon',color:'cyan',cost:0},
- {name:'Feu d\'Or',color:'gold',cost:50},
- {name:'Plasma Rose',color:'pink',cost:100},
- {name:'Arc-en-ciel',color:'rainbow',cost:200}
+ {name:'Cyan Néon',color:'cyan'},
+ {name:'Feu d\'Or',color:'gold'},
+ {name:'Plasma Rose',color:'pink'},
+ {name:'Arc-en-ciel',color:'rainbow'}
+];
+
+const BG_THEMES=[
+ {name:'Classique Étoilé'},
+ {name:'Grille Cyber 80s'},
+ {name:'Pluie Matrix'},
+ {name:'Vortex Espace'}
 ];
 
 function beep(f,d,t,v){if(muted)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=t||'square';o.frequency.value=f;g.gain.value=v||.04;g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
@@ -112,7 +130,7 @@ function sndLabel(){document.querySelectorAll('.sndBtn').forEach(function(b){b.i
 document.querySelectorAll('.sndBtn').forEach(function(b){b.onclick=function(){muted=!muted;save('upward_mute',muted?1:0);sndLabel()}});sndLabel();
 
 let state='MENU',score=0,coins=load('upward_coins'),bestScore=load('upward_best');
-let cameraY=0,T=0,nextY=0,shake=0,bannerT=0,revived=false,inv=0,pathX=0,sinceHeavy=9,lastT=-1,startBest=0,recBeaten=false,recT=0;
+let cameraY=0,T=0,nextY=0,shake=0,bannerT=0,reviveCount=0,inv=0,pathX=0,sinceHeavy=9,lastT=-1,startBest=0,recBeaten=false,recT=0;
 const WORLDS=[
  {name:'CYAN NEON',hue:180,bg:'#060612'},
  {name:'AMBER ROTORS',hue:45,bg:'#120f05'},
@@ -141,34 +159,44 @@ function updateBadges(){
 }
 updateBadges();
 
+function switchShopTab(tab){
+  shopTab=tab;
+  document.getElementById('tabTrails').classList.toggle('active', tab==='trails');
+  document.getElementById('tabThemes').classList.toggle('active', tab==='themes');
+  buildShop();
+}
+
 function buildShop(){
   const grid=document.getElementById('shopGrid');
   grid.innerHTML='';
-  TRAILS.forEach((tr,idx)=>{
-    const unlocked=unlockedTrails.includes(idx);
-    const active=currentTrail===idx;
-    const div=document.createElement('div');
-    div.className='shop-item'+(active?' active':'');
-    div.innerHTML=`<div style="font-weight:700;font-size:0.85rem;color:${active?'#ffd700':'#fff'}">${tr.name}</div><div style="font-size:0.75rem;margin-top:4px;color:${unlocked?'#00f3ff':'#889'}">${active?'ÉQUIPÉ':unlocked?'ACQUIS':tr.cost+' ●'}</div>`;
-    div.onclick=()=>{
-      if(unlocked){
-        currentTrail=idx;save('upward_trail',idx);buildShop();vibrate(20);
-      } else if(coins>=tr.cost){
-        coins-=tr.cost;save('upward_coins',coins);
-        unlockedTrails.push(idx);save('upward_unlocked',JSON.stringify(unlockedTrails));
-        currentTrail=idx;save('upward_trail',idx);
-        updateBadges();buildShop();vibrate(50);beep(880,.2,'triangle',.05);
-      } else {
-        beep(220,.15,'sawtooth',.05);vibrate(100);
-      }
-    };
-    grid.appendChild(div);
-  });
+  if(shopTab==='trails'){
+    TRAILS.forEach((tr,idx)=>{
+      const active=currentTrail===idx;
+      const div=document.createElement('div');
+      div.className='shop-item'+(active?' active':'');
+      div.innerHTML=`<div style="font-weight:700;font-size:0.8rem;color:${active?'#ffd700':'#fff'}">${tr.name}</div><div style="font-size:0.7rem;margin-top:3px;color:#00f3ff">${active?'ÉQUIPÉ':'CHOISIR'}</div>`;
+      div.onclick=()=>{
+        currentTrail=idx; save('upward_trail',idx); buildShop(); vibrate(20); beep(600,.1,'triangle',.04);
+      };
+      grid.appendChild(div);
+    });
+  } else {
+    BG_THEMES.forEach((th,idx)=>{
+      const active=currentTheme===idx;
+      const div=document.createElement('div');
+      div.className='shop-item'+(active?' active':'');
+      div.innerHTML=`<div style="font-weight:700;font-size:0.8rem;color:${active?'#ffd700':'#fff'}">${th.name}</div><div style="font-size:0.7rem;margin-top:3px;color:#00f3ff">${active?'ÉQUIPÉ':'CHOISIR'}</div>`;
+      div.onclick=()=>{
+        currentTheme=idx; save('upward_bg_theme',idx); buildShop(); vibrate(20); beep(600,.1,'triangle',.04);
+      };
+      grid.appendChild(div);
+    });
+  }
 }
 
 function burst(x,y,c,n,s){for(let i=0;i<n;i++){const a=Math.random()*6.283,v=Math.random()*s+s*.3;parts.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,l:1,c:c})}}
 function initGame(){
- score=0;T=0;shake=0;revived=false;inv=0;bannerT=0;recT=0;recBeaten=false;startBest=bestScore;
+ score=0;T=0;shake=0;reviveCount=0;inv=0;bannerT=0;recT=0;recBeaten=false;startBest=bestScore;
  ball.x=W/2;ball.y=H-120;ball.vx=1.3;ball.vy=-2;ball.trail=[];
  obstacles=[];items=[];parts=[];worldIdx=0;currentWorld=WORLDS[0];
  cameraY=ball.y-H*.8;pathX=W/2;sinceHeavy=9;lastT=-1;nextY=H-300;fillWorld();
@@ -266,13 +294,29 @@ function die(){
   document.getElementById('finalScoreText').innerText='SCORE : '+score;
   document.getElementById('bestScoreText').innerText='MEILLEUR RECORD : '+bestScore+(score<bestScore?'  ·  encore '+(bestScore-score):'  ·  NOUVEAU !');
   document.getElementById('finalCoinsText').innerText='PIÈCES TOTALES : '+coins;
-  document.getElementById('reviveAdBtn').classList.toggle('hidden',revived);
-  document.getElementById('reviveCoinBtn').classList.toggle('hidden',revived||coins<25);
+  
+  const btnCoin=document.getElementById('reviveCoinBtn');
+  const btnAd=document.getElementById('reviveAdBtn');
+  
+  if(reviveCount===0){
+    btnCoin.classList.remove('hidden');
+    btnCoin.disabled=(coins<25);
+    btnCoin.innerText='REVIVRE : 25 ● (1/2)';
+    btnAd.classList.add('hidden');
+  } else if(reviveCount===1){
+    btnCoin.classList.add('hidden');
+    btnAd.classList.remove('hidden');
+    btnAd.innerText='PUB POUR REVIVRE (2/2)';
+  } else {
+    btnCoin.classList.add('hidden');
+    btnAd.classList.add('hidden');
+  }
+
   show('gameOverScreen',true);state='GAMEOVER';
  },650);
 }
-function revive(){
- revived=true;
+function triggerRevive(){
+ reviveCount++;
  obstacles=obstacles.filter(function(o){return Math.abs(o.y-ball.y)>240});
  items=items.filter(function(i){return Math.abs(i.y-ball.y)>240});
  inv=150;ball.vx=Math.abs(ball.vx);show('gameOverScreen',false);show('adScreen',false);state='PLAYING';beep(660,.2,'triangle',.06);vibrate(50);
@@ -291,8 +335,8 @@ document.getElementById('menuBtn').onclick=showMenu;
 document.getElementById('pauseMenuBtn').onclick=showMenu;
 document.getElementById('resumeBtn').onclick=resume;
 document.getElementById('reviveAdBtn').onclick=watchAd;
-document.getElementById('adCloseBtn').onclick=revive;
-document.getElementById('reviveCoinBtn').onclick=function(){if(coins>=25){coins-=25;save('upward_coins',coins);revive()}};
+document.getElementById('adCloseBtn').onclick=triggerRevive;
+document.getElementById('reviveCoinBtn').onclick=function(){if(coins>=25){coins-=25;save('upward_coins',coins);updateBadges();triggerRevive()}};
 document.addEventListener('visibilitychange',function(){if(document.hidden)pause()});
 window.addEventListener('pointerdown',function(e){
  if(e.target.closest('button'))return;
@@ -331,7 +375,6 @@ function step(){
    const o=obstacles[i];
    if(Math.abs(o.y-ball.y)<140){
     const ps=prims(o);
-    // Détection frôlement (Near miss)
     if(ps.some(function(p){return hitP(p,ball.x,ball.y,ball.r+8)})){
      if(Math.random()<.15){burst(ball.x,ball.y,'#ffffff',2,1.5)}
     }
@@ -343,14 +386,36 @@ function step(){
 function draw(){
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.globalAlpha=1;ctx.shadowBlur=0;
  const hue=currentWorld.hue,col='hsl('+hue+',100%,50%)',oc='hsl('+((hue+140)%360)+',100%,60%)',elec=!!currentWorld.pulse,pulse=elec?1-(T%30)/30:0;
- ctx.fillStyle=currentWorld.bg;ctx.fillRect(0,0,W,H);
- if(elec){ctx.fillStyle='hsla('+hue+',100%,60%,'+(.12*pulse)+')';ctx.fillRect(0,0,W,H)}
- stars.forEach(function(s){
-  const sy=currentWorld.st;
-  if(sy==='bub'){ctx.strokeStyle='hsla('+hue+',100%,75%,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(s.x,s.y,s.size*2+1,0,6.283);ctx.stroke()}
-  else if(s.shooting){ctx.strokeStyle='hsl('+hue+',100%,70%)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(s.x-(sy==='rain'?0:s.length),s.y-(sy==='rain'?s.length*1.4:s.length));ctx.stroke()}
-  else{ctx.fillStyle='rgba(255,255,255,.6)';ctx.fillRect(s.x,s.y,s.size,s.size)}
- });
+ 
+ // Rendu du thème sélectionné
+ if(currentTheme===1){ // Grille Cyber 80s
+  ctx.fillStyle='#080212';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(255,0,127,0.25)';ctx.lineWidth=1;
+  const off=(T*1.5)%30;
+  for(let y=off;y<H;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+ } else if(currentTheme===2){ // Pluie Matrix
+  ctx.fillStyle='#020804';ctx.fillRect(0,0,W,H);
+  stars.forEach(s=>{
+   ctx.fillStyle='rgba(0,255,100,0.45)';ctx.fillRect(s.x,(s.y*2)%H,2,14);
+  });
+ } else if(currentTheme===3){ // Vortex Espace
+  ctx.fillStyle='#020208';ctx.fillRect(0,0,W,H);
+  stars.forEach(s=>{
+   const dist=Math.hypot(s.x-W/2, s.y-H/2);
+   ctx.fillStyle='rgba(255,255,255,'+(0.2+Math.sin(T*0.05+dist)*0.3)+')';
+   ctx.fillRect(s.x,s.y,s.size*1.5,s.size*1.5);
+  });
+ } else { // Classique Etoilé
+  ctx.fillStyle=currentWorld.bg;ctx.fillRect(0,0,W,H);
+  if(elec){ctx.fillStyle='hsla('+hue+',100%,60%,'+(.12*pulse)+')';ctx.fillRect(0,0,W,H)}
+  stars.forEach(function(s){
+   const sy=currentWorld.st;
+   if(sy==='bub'){ctx.strokeStyle='hsla('+hue+',100%,75%,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(s.x,s.y,s.size*2+1,0,6.283);ctx.stroke()}
+   else if(s.shooting){ctx.strokeStyle='hsl('+hue+',100%,70%)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(s.x-(sy==='rain'?0:s.length),s.y-(sy==='rain'?s.length*1.4:s.length));ctx.stroke()}
+   else{ctx.fillStyle='rgba(255,255,255,.6)';ctx.fillRect(s.x,s.y,s.size,s.size)}
+  });
+ }
+
  ctx.save();
  if(shake>.3)ctx.translate((Math.random()-.5)*shake*2,(Math.random()-.5)*shake*2);
  ctx.translate(0,-cameraY);
@@ -377,7 +442,6 @@ function draw(){
  items.forEach(function(it){if(!it.got){ctx.beginPath();ctx.arc(it.x,it.y,it.r,0,6.283);ctx.fill()}});
  ctx.shadowBlur=0;
  
- // Rendu de la traînée selon le skin choisi
  for(let i=0;i<ball.trail.length;i++){
   const t=ball.trail[i],r=i/ball.trail.length;
   let tCol='hsla('+hue+',100%,60%,'+(r*.6)+')';
