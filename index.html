@@ -44,10 +44,10 @@ h2{font-size:1.5rem;font-weight:900;letter-spacing:2px;margin:0 0 8px;text-align
     <div class="stat-badge" id="menuBestBadge" style="color:#00f3ff"></div>
     <div class="stat-badge" id="menuCoinsBadge"></div>
     
-    <button class="btn btn-primary" onclick="startSelectedMode(0)">MODE INFINI (STANDARD)</button>
-    <button class="btn btn-gold" onclick="startSelectedMode(1)">CONTRE-LA-MONTRE</button>
-    <button class="btn btn-pink" onclick="startSelectedMode(2)">MODE HARDCORE</button>
-    <button class="btn" onclick="startSelectedMode(3)" style="border-color:#00ff88;color:#00ff88">CHASSE AUX PIÈCES</button>
+    <button class="btn btn-primary" id="mode0Btn">MODE INFINI (STANDARD)</button>
+    <button class="btn btn-gold" id="mode1Btn">CONTRE-LA-MONTRE</button>
+    <button class="btn btn-pink" id="mode2Btn">MODE HARDCORE</button>
+    <button class="btn" id="mode3Btn" style="border-color:#00ff88;color:#00ff88">CHASSE AUX PIÈCES</button>
     
     <button class="btn btn-gold" id="openShopBtn" style="margin-top:8px">BOUTIQUE & THÈMES</button>
     <button class="btn btn-small sndBtn"></button>
@@ -56,8 +56,8 @@ h2{font-size:1.5rem;font-weight:900;letter-spacing:2px;margin:0 0 8px;text-align
   <div id="shopScreen" class="screen hidden">
     <h2>BOUTIQUE</h2>
     <div class="shop-tabs">
-      <div class="shop-tab active" id="tabTrails" onclick="switchShopTab('trails')">TRAÎNÉES</div>
-      <div class="shop-tab" id="tabThemes" onclick="switchShopTab('themes')">THÈMES FOND</div>
+      <div class="shop-tab active" id="tabTrails">TRAÎNÉES</div>
+      <div class="shop-tab" id="tabThemes">THÈMES FOND</div>
     </div>
     <div class="shop-grid" id="shopGrid"></div>
     <button class="btn btn-primary" id="closeShopBtn">RETOUR</button>
@@ -263,7 +263,6 @@ function spawnObstacle(y){
  else if(t===17){o.gw=gw+10;o.c=px;o.d=(px<W/2?1:-1)*36;cx=px+2*o.d}
  else{o.c=Math.max(L+75,Math.min(R-75,px))}
 
- // Apparition des pièces selon le mode
  const coinChance = gameMode===3 ? 0.75 : 0.30;
  if(Math.random()<coinChance){
   let coinX;
@@ -350,7 +349,6 @@ function die(){
   const btnCoin=document.getElementById('reviveCoinBtn');
   const btnAd=document.getElementById('reviveAdBtn');
   
-  // Pas de revive en mode Hardcore (mode 2)
   if(gameMode===2){
     btnCoin.classList.add('hidden');
     btnAd.classList.add('hidden');
@@ -384,15 +382,27 @@ function watchAd(){
  show('gameOverScreen',false);show('adScreen',true);b.disabled=true;t.innerText='Pub simulée... '+n+' s';
  clearInterval(adTimer);adTimer=setInterval(function(){n--;if(n>0)t.innerText='Pub simulée... '+n+' s';else{clearInterval(adTimer);t.innerText='Récompense prête !';b.disabled=false}},1000);
 }
-document.getElementById('openShopBtn').onclick=openShop;
-document.getElementById('closeShopBtn').onclick=showMenu;
-document.getElementById('restartBtn').onclick=()=>startSelectedMode(gameMode);
-document.getElementById('menuBtn').onclick=showMenu;
-document.getElementById('pauseMenuBtn').onclick=showMenu;
-document.getElementById('resumeBtn').onclick=resume;
-document.getElementById('reviveAdBtn').onclick=watchAd;
-document.getElementById('adCloseBtn').onclick=triggerRevive;
-document.getElementById('reviveCoinBtn').onclick=function(){if(coins>=25){coins-=25;save('upward_coins',coins);updateBadges();triggerRevive()}};
+
+// --- ASSOCIATION SÉCURISÉE DES BOUTONS DE CLICS (Évite les blocages mobiles) ---
+document.getElementById('mode0Btn').onclick = () => { vibrate(30); startSelectedMode(0); };
+document.getElementById('mode1Btn').onclick = () => { vibrate(30); startSelectedMode(1); };
+document.getElementById('mode2Btn').onclick = () => { vibrate(30); startSelectedMode(2); };
+document.getElementById('mode3Btn').onclick = () => { vibrate(30); startSelectedMode(3); };
+
+document.getElementById('openShopBtn').onclick = () => { vibrate(20); openShop(); };
+document.getElementById('closeShopBtn').onclick = () => { vibrate(20); showMenu(); };
+document.getElementById('restartBtn').onclick = () => { vibrate(30); startSelectedMode(gameMode); };
+document.getElementById('menuBtn').onclick = () => { vibrate(20); showMenu(); };
+document.getElementById('pauseMenuBtn').onclick = () => { vibrate(20); showMenu(); };
+document.getElementById('resumeBtn').onclick = () => { vibrate(20); resume(); };
+document.getElementById('reviveAdBtn').onclick = () => { vibrate(30); watchAd(); };
+document.getElementById('adCloseBtn').onclick = () => { vibrate(30); triggerRevive(); };
+document.getElementById('reviveCoinBtn').onclick = () => {
+  if(coins>=25){ coins-=25; save('upward_coins',coins); updateBadges(); triggerRevive(); }
+};
+document.getElementById('tabTrails').onclick = () => switchShopTab('trails');
+document.getElementById('tabThemes').onclick = () => switchShopTab('themes');
+
 document.addEventListener('visibilitychange',function(){if(document.hidden)pause()});
 
 window.addEventListener('pointerdown',function(e){
@@ -421,7 +431,6 @@ function step(){
  ball.trail.push({x:ball.x,y:ball.y});if(ball.trail.length>18)ball.trail.shift();
  const hs=Math.floor(-ball.y/6);if(hs>score)score=hs;
 
- // Victoire Speedrun à 3000 pts
  if(gameMode===1 && score>=3000){
    if(speedrunTime<bestSpeedrun){bestSpeedrun=speedrunTime;save('upward_best_sr',bestSpeedrun)}
    die();return;
