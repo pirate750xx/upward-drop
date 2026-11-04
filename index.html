@@ -100,7 +100,6 @@
 <body>
 
 <div id="gameContainer">
-  <!-- Menu Principal avec affichage du Record -->
   <div id="menuScreen" class="screen">
     <h1>UPWARD DROP</h1>
     <div class="subtitle">TAP POUR CHANGER DE DIRECTION</div>
@@ -109,7 +108,6 @@
     <button class="btn btn-primary" id="startBtn">JOUER</button>
   </div>
 
-  <!-- Écran Game Over -->
   <div id="gameOverScreen" class="screen hidden">
     <h1 style="color: #ff007f; text-shadow: 0 0 20px #ff007f;">GAME OVER</h1>
     <div class="stat-badge" style="color: #fff; border-color: #ff007f;" id="finalScoreText">SCORE : 0</div>
@@ -139,7 +137,6 @@ let coins = parseInt(localStorage.getItem('upward_coins')) || 0;
 let bestScore = parseInt(localStorage.getItem('upward_best')) || 0;
 let cameraY = 0;
 
-// Palettes de couleurs selon les mondes
 const WORLDS = [
   { name: "CYAN NEON", hue: 180, bg: '#060612' },
   { name: "MAGENTA SYNTH", hue: 320, bg: '#100512' },
@@ -154,8 +151,8 @@ let ball = {
   x: canvas.width / 2,
   y: canvas.height - 100,
   r: 9,
-  vx: 1.3,  // Vitesse initiale très calme et abordable
-  vy: -2.0, // Montée lente au Niveau 1
+  vx: 1.3,
+  vy: -2.0,
   trail: []
 };
 
@@ -163,7 +160,6 @@ let obstacles = [];
 let items = [];
 let stars = [];
 
-// Initialisation du starfield de fond
 for(let i = 0; i < 70; i++) {
   stars.push({
     x: Math.random() * canvas.width,
@@ -184,10 +180,8 @@ updateBadges();
 function initGame() {
   score = 0;
   cameraY = 0;
-  
-  // Vitesse de départ fluide et très accessible
   ball.x = canvas.width / 2;
-  ball.y = canvas.height - 100;
+  ball.y = canvas.height - 120;
   ball.vx = 1.3;
   ball.vy = -2.0;
   ball.trail = [];
@@ -196,29 +190,26 @@ function initGame() {
   items = [];
   currentWorld = WORLDS[0];
 
-  // Premier obstacle bien haut pour un grand espace libre au départ
   for(let i = 0; i < 5; i++) {
-    spawnObstacle(canvas.height - 320 - (i * 270), i);
+    spawnObstacle(canvas.height - 300 - (i * 250), i);
   }
 }
 
 function spawnObstacle(yPos, index) {
-  let level = Math.floor(score / 50) + 1;
-  let type = 0;
-
-  // On n'introduit la variété de formes qu'à partir du niveau 3 ou 4
+  let level = Math.floor(score / 40) + 1;
+  
+  // Diversification des formes selon un cycle ou aléatoire intelligent
+  let type = index % 3; 
   if (level >= 3) {
-    let rand = Math.random();
-    if (rand < 0.5) type = 0;      // Barre avec ouverture
-    else if (rand < 0.8) type = 1; // Slalom latéral
-    else type = 2;                 // Blocs décalés
+    type = Math.floor(Math.random() * 3); // 0: Trou milieu, 1: Slalom gauche/droite, 2: Blocs multiples
   }
 
   let obs = { y: yPos, h: 14, type: type, parts: [] };
 
   if (type === 0) {
-    let gapWidth = Math.max(130 - (level * 2.5), 85); // Passage large au départ
-    let gapX = Math.random() * (canvas.width - gapWidth - 60) + 30;
+    // Type 0 : Barre avec une ouverture centrale
+    let gapWidth = Math.max(130 - (level * 2), 80);
+    let gapX = 40 + Math.random() * (canvas.width - gapWidth - 80);
     obs.parts.push({ x: 15, w: gapX - 15 });
     obs.parts.push({ x: gapX + gapWidth, w: (canvas.width - 15) - (gapX + gapWidth) });
 
@@ -227,17 +218,22 @@ function spawnObstacle(yPos, index) {
     }
   } 
   else if (type === 1) {
-    let w1 = 65 + Math.random() * 35;
-    let w2 = 65 + Math.random() * 35;
-    obs.parts.push({ x: 15, w: w1 });
-    obs.parts.push({ x: canvas.width - 15 - w2, w: w2 });
+    // Type 1 : Style Slalom (passage sur les côtés ou alterné)
+    let sideChoice = Math.random() > 0.5 ? 'left' : 'right';
+    if (sideChoice === 'left') {
+      obs.parts.push({ x: 15, w: 90 + Math.random() * 30 }); // Bloque tout à gauche, passage à droite
+    } else {
+      let rightW = 90 + Math.random() * 30;
+      obs.parts.push({ x: canvas.width - 15 - rightW, w: rightW }); // Bloque tout à droite, passage à gauche
+    }
 
-    if (Math.random() > 0.4) {
+    if (Math.random() > 0.3) {
       items.push({ x: canvas.width / 2, y: yPos - 45, r: 8, collected: false });
     }
   } 
   else {
-    let centerW = Math.max(85 - (level * 2), 50);
+    // Type 2 : Double blocs / Pilier central
+    let centerW = Math.max(80 - (level * 1.5), 45);
     let centerX = (canvas.width - centerW) / 2;
     obs.parts.push({ x: centerX, w: centerW });
 
@@ -279,8 +275,8 @@ window.addEventListener('pointerdown', (e) => {
 function update() {
   if (state !== 'PLAYING') return;
 
-  // Accélération douce et très étalée sur les niveaux
-  let speedMult = 1 + (score / 1500); 
+  // Accélération très progressive
+  let speedMult = 1 + (score / 1800); 
   let currentDir = Math.sign(ball.vx) || 1;
   ball.vx = currentDir * (1.3 * speedMult);
   ball.vy = -2.0 * speedMult;
@@ -288,18 +284,15 @@ function update() {
   ball.x += ball.vx;
   ball.y += ball.vy;
 
-  // Traînée lumineuse fluide
   ball.trail.push({x: ball.x, y: ball.y});
   if(ball.trail.length > 16) ball.trail.shift();
 
   let currentHeightScore = Math.floor(-ball.y / 6);
   if (currentHeightScore > score) score = currentHeightScore;
 
-  // Changement dynamique de monde/décor tous les 100 points
-  let worldIndex = Math.floor(score / 100) % WORLDS.length;
+  let worldIndex = Math.floor(score / 120) % WORLDS.length;
   currentWorld = WORLDS[worldIndex];
 
-  // Rebond latéral
   if (ball.x - ball.r <= 15) {
     ball.x = 15 + ball.r;
     ball.vx = Math.abs(ball.vx);
@@ -308,19 +301,19 @@ function update() {
     ball.vx = -Math.abs(ball.vx);
   }
 
-  let targetCameraY = ball.y - canvas.height * 0.45;
+  // Caméra abaissée à 58% pour laisser de l'espace visuel au-dessus de la balle
+  let targetCameraY = ball.y - canvas.height * 0.58;
   cameraY += (targetCameraY - cameraY) * 0.1;
 
   let lastY = obstacles.length > 0 ? obstacles[obstacles.length - 1].y : cameraY;
   if(lastY > cameraY - canvas.height) {
-    let spacing = Math.max(270 - (score / 10), 200);
+    let spacing = Math.max(260 - (score / 12), 200);
     spawnObstacle(lastY - spacing, obstacles.length);
   }
 
   obstacles = obstacles.filter(o => o.y < cameraY + canvas.height + 100);
   items = items.filter(it => it.y < cameraY + canvas.height + 100);
 
-  // Ramassage pièces
   items.forEach(it => {
     if (!it.collected) {
       let dist = Math.hypot(ball.x - it.x, ball.y - it.y);
@@ -332,7 +325,6 @@ function update() {
     }
   });
 
-  // Collisions
   obstacles.forEach(o => {
     if (ball.y + ball.r > o.y && ball.y - ball.r < o.y + o.h) {
       o.parts.forEach(part => {
@@ -355,11 +347,9 @@ function update() {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Fond du monde actuel
   ctx.fillStyle = currentWorld.bg;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Étoiles et étoiles filantes
   stars.forEach(s => {
     s.y += s.speed;
     if (s.y > canvas.height) { s.y = 0; s.x = Math.random() * canvas.width; }
@@ -379,7 +369,6 @@ function draw() {
   ctx.save();
   ctx.translate(0, -cameraY);
 
-  // Murs verticaux néon
   ctx.strokeStyle = `hsl(${currentWorld.hue}, 100%, 50%)`;
   ctx.lineWidth = 4;
   ctx.shadowBlur = 12;
@@ -392,7 +381,6 @@ function draw() {
   ctx.stroke();
   ctx.shadowBlur = 0;
 
-  // Obstacles illuminés
   obstacles.forEach(o => {
     ctx.fillStyle = `hsl(${(currentWorld.hue + 140) % 360}, 100%, 60%)`;
     ctx.shadowBlur = 12;
@@ -403,7 +391,6 @@ function draw() {
     ctx.shadowBlur = 0;
   });
 
-  // Pièces d'or
   items.forEach(it => {
     if (!it.collected) {
       ctx.fillStyle = '#ffd700';
@@ -416,7 +403,6 @@ function draw() {
     }
   });
 
-  // Traînée réaliste sous la balle
   for(let i = 0; i < ball.trail.length; i++) {
     let t = ball.trail[i];
     let ratio = i / ball.trail.length;
@@ -426,7 +412,6 @@ function draw() {
     ctx.fill();
   }
 
-  // Balle joueur Gold / Glow
   ctx.fillStyle = '#ffffff';
   ctx.shadowBlur = 20;
   ctx.shadowColor = `hsl(${currentWorld.hue}, 100%, 50%)`;
@@ -437,11 +422,9 @@ function draw() {
 
   ctx.restore();
 
-  // Interface HUD en haut
   if (state === 'PLAYING') {
     let currentLevel = Math.floor(score / 50) + 1;
 
-    // Badge Score à gauche
     ctx.fillStyle = 'rgba(5, 5, 16, 0.85)';
     ctx.fillRect(20, 20, 100, 38);
     ctx.strokeStyle = `hsl(${currentWorld.hue}, 100%, 50%)`;
@@ -453,7 +436,6 @@ function draw() {
     ctx.textAlign = 'center';
     ctx.fillText(`SCORE ${score}`, 70, 44);
 
-    // Badge Monde / Niveau à droite
     ctx.fillStyle = 'rgba(5, 5, 16, 0.85)';
     ctx.fillRect(canvas.width - 150, 20, 130, 38);
     ctx.strokeRect(canvas.width - 150, 20, 130, 38);
