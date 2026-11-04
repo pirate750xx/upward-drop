@@ -141,26 +141,25 @@ const MISS=[{t:'Atteins 1500 pts en Infini',g:1500},{t:'Ramasse 40 pièces',g:40
 
 const MODES=['INFINI','SPEEDRUN','HARDCORE','GOLD RUSH'];
 
-// MONDES IMMERSIFS AVEC IDENTITÉ TOTALE PAR MODE
 const WORLDS=[
- [ // MODE 0: INFINI (Cosmique & Néo-Cyber)
+ [ 
   {name:'CYAN NÉON',bg1:'#040818',bg2:'#021b36',wall:'#00f3ff',obs:'#ff00aa',type:'grid'},
   {name:'AMBRE VOLCAN',bg1:'#180802',bg2:'#361202',wall:'#ff8800',obs:'#ff2200',type:'fire'},
   {name:'ÉMERAUDE GRID',bg1:'#021408',bg2:'#043612',wall:'#00ff78',obs:'#00f3ff',type:'matrix'},
   {name:'ÉLECTRO PURPLE',bg1:'#140218',bg2:'#33043d',wall:'#dc00ff',obs:'#00ffff',type:'vortex'}
  ],
- [ // MODE 1: SPEEDRUN (Vitesse & Laser)
+ [ 
   {name:'CYBER SPRINT',bg1:'#020d1c',bg2:'#04244d',wall:'#00f3ff',obs:'#ff00ff',type:'speed'},
   {name:'TUNNEL NÉON',bg1:'#0f021c',bg2:'#32044d',wall:'#ff00aa',obs:'#00ffff',type:'vortex'},
   {name:'HYPERESPACE',bg1:'#02051c',bg2:'#09144a',wall:'#4488ff',obs:'#ffaa00',type:'grid'}
  ],
- [ // MODE 2: HARDCORE (L'Enfer Brutal - Vitesse & Pièges mortels)
+ [ 
   {name:'BRAISE',bg1:'#1c0702',bg2:'#4a1204',wall:'#ff4400',obs:'#ffcc00',type:'fire'},
   {name:'MAGMA',bg1:'#1c0302',bg2:'#4d0804',wall:'#ff2200',obs:'#ff7700',type:'fire'},
   {name:'VOLCAN',bg1:'#1c0202',bg2:'#4d0404',wall:'#ff0000',obs:'#ffaa00',type:'fire'},
   {name:'ENFER',bg1:'#1c010f',bg2:'#4d042f',wall:'#ff0055',obs:'#ffaa00',type:'fire'}
  ],
- [ // MODE 3: GOLD RUSH (La Ruée vers l'Or Fébrile)
+ [ 
   {name:'TRÉSOR',bg1:'#1c1702',bg2:'#4d3f04',wall:'#ffd700',obs:'#ffaa00',type:'matrix'},
   {name:'MINE D\'OR',bg1:'#1c1002',bg2:'#4d2c04',wall:'#ffc000',obs:'#ff5500',type:'fire'},
   {name:'TEMPLE',bg1:'#14140c',bg2:'#38381c',wall:'#ffee44',obs:'#00ffaa',type:'grid'}
@@ -240,7 +239,8 @@ function startGame(m){
  score=0;T=0;runTime=0;runCoins=0;streak=0;shake=0;reviveCount=0;inv=0;bannerT=0;recT=0;popT=0;boostT=0;recBeaten=false;
  startBest=(m===0||m===2)?best[m]:0;goldT=3600;
  ball.x=W/2;ball.y=H-120;ball.vx=1.3;ball.vy=-2;ball.trail=[];
- obstacles=[];items=[];ups=[];parts=[];worldIdx=0;currentWorld=WORLDS[m][0];
+ obstacles=[];items=[];ups=[];parts=[];worldIdx=0;
+ currentWorld=WORLDS[m]&&WORLDS[m][0]?WORLDS[m][0]:{name:'CYAN NÉON',bg1:'#040818',bg2:'#021b36',wall:'#00f3ff',obs:'#ff00aa',type:'grid'};
  cameraY=ball.y-H*.8;pathX=W/2;sinceHeavy=9;lastT=-1;nextY=H-300;fillWorld();
  if(!ls('upward_tuto',0)){showOnly('tutoScreen');state='TUTO'}else{showOnly(null);state='READY'}
 }
@@ -279,11 +279,9 @@ function spawnObstacle(y){
  else if(t===17){o.gw=gw+10;o.c=px;o.d=(px<W/2?1:-1)*36;cx=px+2*o.d}
  else{o.c=Math.max(L+85,Math.min(R-85,px))}
  
- // DISPARITION ET ANIMATION DES PIÈCES (GOLD RUSH & CLASSIQUE)
  if(gameMode===3){for(let i=-2;i<=2;i++)items.push({x:Math.max(L+12,Math.min(R-12,cx+i*30)),y:y-55,r:9,life:240,spin:0,got:false})}
  else{items.push({x:cx,y:y-55,r:9,life:gameMode===2?150:300,spin:0,got:false});if(Math.random()<.35)items.push({x:cx+(Math.random()<.5?-1:1)*30,y:y-95,r:9,life:250,spin:0,got:false})}
  
- // PAS DE BONUS DE SAUT/TURBO EN MODE HARDCORE (PUREMENT HARD)
  if(gameMode!==2&&gameMode!==3){const q=Math.random();if(q<.2){ups.push({k:q<.1?'j':'b',x:Math.max(L+40,Math.min(R-40,cx+(Math.random()*2-1)*50)),y:y-105,w:56,h:16,hit:false})}}
  pathX=cx;obstacles.push(o);
 }
@@ -331,8 +329,9 @@ function toMenu(){updateBadges();showOnly('menuScreen');state='MENU'}
 
 function finish(kind){
  state='DEAD';endKind=kind;const win=kind!=='dead';
+ const fallbackObs = (currentWorld && currentWorld.obs) ? currentWorld.obs : '#ff4fd8';
  if(win){burst(ball.x,ball.y,'#ffd76a',60,5);burst(ball.x,ball.y,'#ffffff',20,3);beep(880,.3,'triangle',.07);vib([60,40,60])}
- else{shake=set.fx?16:5;burst(ball.x,ball.y,currentWorld.obs||'#ff4fd8',40,5);burst(ball.x,ball.y,'#ffffff',16,3);beep(110,.5,'sawtooth',.08);vib([100,50,150])}
+ else{shake=set.fx?16:5;burst(ball.x,ball.y,fallbackObs,40,5);burst(ball.x,ball.y,'#ffffff',16,3);beep(110,.5,'sawtooth',.08);vib([100,50,150])}
  let nr=false;
  if(gameMode===1){if(win&&(!best[1]||runTime<best[1])){best[1]=runTime;nr=true;sv('upward_best_t1',runTime)}}
  else{const v=gameMode===3?runCoins:score;if(v>best[gameMode]){best[gameMode]=v;nr=true;sv(gameMode===0?'upward_best_m0':'upward_best_m'+gameMode,v)}}
@@ -346,7 +345,7 @@ function finish(kind){
  setTimeout(function(){
   if(state!=='DEAD')return;
   $('goTitle').innerText=kind==='dead'?'GAME OVER':kind==='win'?'VICTOIRE !':'TEMPS ÉCOULÉ';
-  $('goTitle').style.color=kind==='dead'?currentWorld.obs:'var(--gold)';
+  $('goTitle').style.color=kind==='dead'?fallbackObs:'var(--gold)';
   $('goL1').innerText=gameMode===1?(win?'TEMPS : '+(runTime/60).toFixed(2)+' s':'SCORE : '+score+' / 3000'):gameMode===3?'PIÈCES : '+runCoins:'SCORE : '+score;
   const bv=gameMode===1?(best[1]?(best[1]/60).toFixed(2)+' s':'--'):best[gameMode];
   const cur=gameMode===3?runCoins:score;
@@ -406,14 +405,13 @@ function music(){
 function getP(o){if(o._T!==T){o._p=prims(o);o._T=T}return o._p}
 function step(){
  T++;shake*=.9;inv=Math.max(0,inv-1);bannerT=Math.max(0,bannerT-1);recT=Math.max(0,recT-1);popT=Math.max(0,popT-1);
- const sty=themeSel===2?'matrix':themeSel===0?(currentWorld.type||''):'';
+ const sty=themeSel===2?'matrix':themeSel==='0'?(currentWorld&&currentWorld.type?currentWorld.type:''):'';
  stars.forEach(s=>{if(sty==='bub'||sty==='fire'){s.y-=s.speed*.8;if(s.y<0){s.y=H;s.x=Math.random()*W}}else{s.y+=s.speed*(sty==='speed'?6:sty==='matrix'?3:1.2);if(s.y>H){s.y=0;s.x=Math.random()*W}}});
  if(sty==='fire'&&!lowQ)sparks.forEach(p=>{p.y+=p.vy;p.x+=p.vx;if(p.y<0){p.y=H;p.x=Math.random()*W}});
  parts=parts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.05;return(p.l-=.025)>0});
  items.forEach(it=>{
   it.spin+=.05;
-  it.life--; // Disparition progressive des pièces si on tarde trop !
-  // Effet d'attraction magnétique subtil vers la balle
+  it.life--;
   if(Math.hypot(ball.x-it.x, ball.y-it.y) < 90) {
    it.x += (ball.x - it.x) * 0.08;
    it.y += (ball.y - it.y) * 0.08;
@@ -425,7 +423,6 @@ function step(){
  runTime++;if(boostT>0)boostT--;
  music();
  
- // MULTIPLICATEUR DE VITESSE PROPRE A CHAQUE MODE
  let modeSpeedMultiplier = gameMode===1 ? 1.45 : gameMode===2 ? 1.55 : 1;
  const bs=modeSpeedMultiplier * (boostT>0?1.5:1)*(1+.35*Math.min(1,diff())),dir=Math.sign(ball.vx)||1;
  ball.vx=dir*1.3*bs;ball.vy=-2*bs;ball.x+=ball.vx;ball.y+=ball.vy;
@@ -437,16 +434,18 @@ function step(){
  
  {
   const ws=WORLDS[gameMode];
-  const wi=Math.floor(score/WLEN[gameMode])%ws.length;
-  if(wi!==worldIdx){
-    worldIdx=wi;
-    currentWorld=ws[wi];
-    bannerT=150;
-    beep(780,.25,'triangle',.06);
+  if(ws && ws.length > 0){
+   const wi=Math.floor(score/WLEN[gameMode])%ws.length;
+   if(wi!==worldIdx){
+     worldIdx=wi;
+     currentWorld=ws[wi];
+     bannerT=150;
+     beep(780,.25,'triangle',.06);
+   }
   }
  }
 
- const wc=currentWorld.obs||'#ff4fd8';
+ const wc=(currentWorld && currentWorld.obs)?currentWorld.obs:'#ff4fd8';
  if(ball.x-ball.r<=WM){ball.x=WM+ball.r;ball.vx=Math.abs(ball.vx);shake=Math.max(shake,set.fx?8:2);streak=0;vib(15);beep(300,.04);burst(ball.x,ball.y,wc,5,2.5)}
  else if(ball.x+ball.r>=W-WM){ball.x=W-WM-ball.r;ball.vx=-Math.abs(ball.vx);shake=Math.max(shake,set.fx?8:2);streak=0;vib(15);beep(300,.04);burst(ball.x,ball.y,wc,5,2.5)}
  cameraY+=((ball.y-H*.8)-cameraY)*.1;fillWorld();
@@ -469,7 +468,7 @@ function step(){
   if(Math.abs(o.y-ball.y)<140&&getP(o).some(p=>hitP(p,ball.x,ball.y,ball.r-2))){finish('dead');return}}}
 }
 function trailCol(i,r){
- const mc=currentWorld.wall||'#5cf7ff';
+ const mc=(currentWorld && currentWorld.wall)?currentWorld.wall:'#5cf7ff';
  switch(trailSel){
   case 1:return'hsla(45,100%,'+(50+r*20)+'%,'+r*.7+')';
   case 2:return'hsla(320,100%,65%,'+r*.7+')';
@@ -487,13 +486,14 @@ function roundedRect(ctx,x,y,w,h,r){
 }
 function draw(){
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.globalAlpha=1;ctx.shadowBlur=0;
+ if(!currentWorld) currentWorld={name:'CYAN NÉON',bg1:'#040818',bg2:'#021b36',wall:'#00f3ff',obs:'#ff00aa',type:'grid'};
  const fx=!!set.fx;
  const mc=currentWorld.wall||'#5cf7ff';
  const oc=currentWorld.obs||'#ff4fd8';
  
  const bgGrad=ctx.createRadialGradient(W*.5,H*.3,10,W*.5,H*.5,W*1.1);
- bgGrad.addColorStop(0,currentWorld.bg2);
- bgGrad.addColorStop(1,currentWorld.bg1);
+ bgGrad.addColorStop(0,currentWorld.bg2||'#021b36');
+ bgGrad.addColorStop(1,currentWorld.bg1||'#040818');
  ctx.fillStyle=bgGrad;ctx.fillRect(0,0,W,H);
 
  const sty=themeSel===2?'matrix':themeSel===0?(currentWorld.type||''):'';
@@ -562,7 +562,6 @@ function draw(){
  items.forEach(it=>{
   if(!it.got){
    ctx.save();ctx.translate(it.x,it.y);ctx.rotate(it.spin);
-   // Effet de clignotement quand la pièce va bientôt disparaître
    if(it.life < 50 && Math.floor(T/4)%2 === 0) ctx.globalAlpha = 0.3;
    ctx.shadowColor='#ffd700';ctx.shadowBlur=sh(18);ctx.fillStyle='#ffd700';
    ctx.beginPath();ctx.moveTo(0,-11);ctx.lineTo(10,0);ctx.lineTo(0,11);ctx.lineTo(-10,0);ctx.closePath();ctx.fill();
