@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#060612">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="description" content="Upward Drop Gold : un arcade néon vertical ultime avec plusieurs modes de jeu.">
 <title>Upward Drop Gold</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
@@ -13,18 +12,18 @@ body{margin:0;background:#030308;color:#fff;font-family:'Segoe UI',Roboto,sans-s
 #sa{position:fixed;top:0;left:0;height:env(safe-area-inset-top,0px);width:1px;visibility:hidden}
 #gameContainer{position:relative;width:100%;max-width:420px;height:100%;max-height:850px;overflow:hidden;background:#060612}
 canvas{display:block;width:100%;height:100%}
-.screen{position:absolute;inset:0;background:rgba(5,5,16,.96);backdrop-filter:blur(8px);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:10;padding:15px;overflow-y:auto}
+.screen{position:absolute;inset:0;background:rgba(5,5,16,.96);backdrop-filter:blur(8px);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:10;padding:15px}
 .hidden{display:none!important}
 h1{font-size:2.2rem;font-weight:900;letter-spacing:3px;margin:0 0 2px;text-align:center;background:linear-gradient(90deg,#00f3ff,#ff00cc,#ffd700);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(0,243,255,.5))}
 h2{font-size:1.5rem;font-weight:900;letter-spacing:2px;margin:0 0 8px;text-align:center}
-.subtitle{color:#8899ac;font-size:.75rem;margin-bottom:10px;text-align:center;letter-spacing:1px}
-.stat-badge{background:rgba(255,255,255,.05);border:1px solid rgba(0,243,255,.3);padding:5px 14px;border-radius:20px;font-size:0.8rem;font-weight:700;color:#ffd700;margin-bottom:5px}
-.btn{background:transparent;border:2px solid #00f3ff;padding:10px 24px;font-size:.9rem;font-weight:800;border-radius:35px;color:#00f3ff;box-shadow:0 0 15px rgba(0,243,255,.3);cursor:pointer;margin:4px 0;width:85%;max-width:260px;text-align:center;font-family:inherit;letter-spacing:1px}
+.subtitle{color:#8899ac;font-size:.75rem;margin-bottom:12px;text-align:center;letter-spacing:1px}
+.stat-badge{background:rgba(255,255,255,.05);border:1px solid rgba(0,243,255,.3);padding:6px 16px;border-radius:20px;font-size:0.8rem;font-weight:700;color:#ffd700;margin-bottom:6px;min-height:26px;display:flex;align-items:center;justify-content:center}
+.btn{background:transparent;border:2px solid #00f3ff;padding:12px 24px;font-size:.9rem;font-weight:800;border-radius:35px;color:#00f3ff;box-shadow:0 0 15px rgba(0,243,255,.3);cursor:pointer;margin:5px 0;width:85%;max-width:260px;text-align:center;font-family:inherit;letter-spacing:1px;touch-action:manipulation}
 .btn-primary{background:linear-gradient(135deg,#00f3ff,#0066ff);color:#000;border:none;box-shadow:0 0 20px rgba(0,243,255,.6)}
 .btn-gold{border-color:#ffd700;color:#ffd700;box-shadow:0 0 14px rgba(255,215,0,.35)}
 .btn-pink{border-color:#ff007f;color:#ff007f;box-shadow:0 0 14px rgba(255,0,127,.35)}
 .btn-small{padding:6px 16px;font-size:.7rem;border-color:#556;color:#99a;box-shadow:none}
-.btn:active{transform:scale(.96)}
+.btn:active{transform:scale(.95)}
 .btn:disabled{opacity:.35}
 .shop-tabs{display:flex;gap:6px;margin-bottom:8px}
 .shop-tab{background:rgba(255,255,255,.05);border:1px solid #445;padding:5px 12px;border-radius:10px;font-size:0.7rem;cursor:pointer;color:#aaa}
@@ -41,8 +40,8 @@ h2{font-size:1.5rem;font-weight:900;letter-spacing:2px;margin:0 0 8px;text-align
   <div id="menuScreen" class="screen">
     <h1>UPWARD DROP</h1>
     <div class="subtitle">GOLD EDITION · MULTI-MODES</div>
-    <div class="stat-badge" id="menuBestBadge" style="color:#00f3ff"></div>
-    <div class="stat-badge" id="menuCoinsBadge"></div>
+    <div class="stat-badge" id="menuBestBadge" style="color:#00f3ff">RECORD : 0</div>
+    <div class="stat-badge" id="menuCoinsBadge" style="color:#ffd700">PIÈCES : 0</div>
     
     <button class="btn btn-primary" id="mode0Btn">MODE INFINI (STANDARD)</button>
     <button class="btn btn-gold" id="mode1Btn">CONTRE-LA-MONTRE</button>
@@ -50,7 +49,7 @@ h2{font-size:1.5rem;font-weight:900;letter-spacing:2px;margin:0 0 8px;text-align
     <button class="btn" id="mode3Btn" style="border-color:#00ff88;color:#00ff88">CHASSE AUX PIÈCES</button>
     
     <button class="btn btn-gold" id="openShopBtn" style="margin-top:8px">BOUTIQUE & THÈMES</button>
-    <button class="btn btn-small sndBtn"></button>
+    <button class="btn btn-small sndBtn">SON : ON</button>
   </div>
   
   <div id="shopScreen" class="screen hidden">
@@ -67,14 +66,14 @@ h2{font-size:1.5rem;font-weight:900;letter-spacing:2px;margin:0 0 8px;text-align
     <h2>PAUSE</h2>
     <button class="btn btn-primary" id="resumeBtn">REPRENDRE</button>
     <button class="btn" id="pauseMenuBtn">MENU</button>
-    <button class="btn btn-small sndBtn"></button>
+    <button class="btn btn-small sndBtn">SON : ON</button>
   </div>
   
   <div id="gameOverScreen" class="screen hidden">
     <h2 style="color:#ff007f;text-shadow:0 0 20px #ff007f">GAME OVER</h2>
-    <div class="stat-badge" style="color:#fff;border-color:#ff007f" id="finalScoreText"></div>
-    <div class="stat-badge" style="color:#00f3ff" id="bestScoreText"></div>
-    <div class="stat-badge" id="finalCoinsText"></div>
+    <div class="stat-badge" style="color:#fff;border-color:#ff007f" id="finalScoreText">SCORE : 0</div>
+    <div class="stat-badge" style="color:#00f3ff" id="bestScoreText">RECORD : 0</div>
+    <div class="stat-badge" id="finalCoinsText" style="color:#ffd700">PIÈCES : 0</div>
     <button class="btn btn-gold" id="reviveCoinBtn">REVIVRE : 25 ● (1/2)</button>
     <button class="btn btn-pink" id="reviveAdBtn">PUB POUR REVIVRE (2/2)</button>
     <button class="btn btn-primary" id="restartBtn">REJOUER</button>
@@ -131,9 +130,9 @@ const BG_THEMES=[
 
 function beep(f,d,t,v){if(muted)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=t||'square';o.frequency.value=f;g.gain.value=v||.04;g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
 function sndLabel(){document.querySelectorAll('.sndBtn').forEach(function(b){b.innerText='SON : '+(muted?'OFF':'ON')})}
-document.querySelectorAll('.sndBtn').forEach(function(b){b.onclick=function(){muted=!muted;save('upward_mute',muted?1:0);sndLabel()}});sndLabel();
+document.querySelectorAll('.sndBtn').forEach(function(b){b.onclick=function(e){e.stopPropagation();muted=!muted;save('upward_mute',muted?1:0);sndLabel()}});sndLabel();
 
-let state='MENU',gameMode=0; // 0: Infini, 1: Speedrun, 2: Hardcore, 3: Coin Rush
+let state='MENU',gameMode=0;
 let score=0,coins=load('upward_coins'),bestScore=load('upward_best');
 let speedrunTime=0, bestSpeedrun=load('upward_best_sr')||999999;
 let cameraY=0,T=0,nextY=0,shake=0,bannerT=0,reviveCount=0,inv=0,pathX=0,sinceHeavy=9,lastT=-1,startBest=0,recBeaten=false,recT=0;
@@ -163,12 +162,18 @@ let obstacles=[],items=[],parts=[],stars=[];
 for(let i=0;i<70;i++)stars.push({x:Math.random()*420,y:Math.random()*850,size:Math.random()*2+.5,speed:Math.random()*.5+.1,shooting:Math.random()>.85,length:20+Math.random()*30});
 
 function updateBadges(){
-  if(gameMode===1){
-    document.getElementById('menuBestBadge').innerText='MEILLEUR TEMPS (3000 PT) : '+(bestSpeedrun===999999?'--:--':(bestSpeedrun/60).toFixed(2)+'s');
-  } else {
-    document.getElementById('menuBestBadge').innerText='RECORD À BATTRE : '+bestScore;
+  const badgeBest = document.getElementById('menuBestBadge');
+  const badgeCoins = document.getElementById('menuCoinsBadge');
+  if(badgeBest){
+    if(gameMode===1){
+      badgeBest.innerText='MEILLEUR TEMPS : '+(bestSpeedrun===999999?'--:--':(bestSpeedrun/60).toFixed(2)+'s');
+    } else {
+      badgeBest.innerText='RECORD À BATTRE : '+bestScore;
+    }
   }
-  document.getElementById('menuCoinsBadge').innerText='PIÈCES : '+coins;
+  if(badgeCoins){
+    badgeCoins.innerText='PIÈCES : '+coins;
+  }
 }
 updateBadges();
 
@@ -188,7 +193,8 @@ function buildShop(){
       const div=document.createElement('div');
       div.className='shop-item'+(active?' active':'');
       div.innerHTML=`<div style="font-weight:700;font-size:0.8rem;color:${active?'#ffd700':'#fff'}">${tr.name}</div><div style="font-size:0.7rem;margin-top:3px;color:${unlocked?'#00f3ff':'#889'}">${active?'ÉQUIPÉ':unlocked?'ACQUIS':tr.cost+' ●'}</div>`;
-      div.onclick=()=>{
+      div.onclick=(e)=>{
+        e.stopPropagation();
         if(unlocked){ currentTrail=idx; save('upward_trail',idx); buildShop(); vibrate(20); }
         else if(coins>=tr.cost){
           coins-=tr.cost; save('upward_coins',coins);
@@ -205,7 +211,8 @@ function buildShop(){
       const div=document.createElement('div');
       div.className='shop-item'+(active?' active':'');
       div.innerHTML=`<div style="font-weight:700;font-size:0.8rem;color:${active?'#ffd700':'#fff'}">${th.name}</div><div style="font-size:0.7rem;margin-top:3px;color:${unlocked?'#00f3ff':'#889'}">${active?'ÉQUIPÉ':unlocked?'ACQUIS':th.cost+' ●'}</div>`;
-      div.onclick=()=>{
+      div.onclick=(e)=>{
+        e.stopPropagation();
         if(unlocked){ currentTheme=idx; save('upward_bg_theme',idx); buildShop(); vibrate(20); }
         else if(coins>=th.cost){
           coins-=th.cost; save('upward_coins',coins);
@@ -300,7 +307,7 @@ function prims(o){
  if(t===12){const r=[],k=beat%4;[[-75,0],[75,0],[-150,1],[150,1]].forEach(function(q){const x=o.c+q[0];if(x<L+6||x>R-6)return;
    const on=q[1]===0?k<2:k>=2,n2=(k+1)%4,nx=q[1]===0?n2<2:n2>=2;r.push({k:'r',x:x-3,y:o.y-45,w:6,h:90,on:on?true:(nx&&bp>=22?'warn':false)})});return r}
  if(t===13){const an=o.a+sec*1.4,l=42,r=[];[[-108,1],[108,-1]].forEach(function(q){const c=o.c+q[0],aa=an*q[1];r.push({k:'s',x1:c-Math.cos(aa)*l,y1:cy-Math.sin(aa)*l,x2:c+Math.cos(aa)*l,y2:cy+Math.sin(aa)*l,w:8})});return r}
- if(t===14){const an=o.a+sec*o.s,l=44,r=[];for(let i=0;i<2;i++){const aa=an+i*1.5708;r.push({k:'s',x1:o.c-Math.cos(aa)*l,y1:cy-Math.sin(aa)*l,x2:o.c+Math.cos(aa)*l,y2:cy+Math.sin(aa)*l,w:7})});return r}
+ if(t===14){const an=o.a+sec*o.s,l=44,r=[];for(let i=0;i<2;i++){const aa=an+i*1.5708;r.push({k:'s',x1:o.c-Math.cos(aa)*l,y1:cy-Math.sin(aa)*l,x2:o.c+Math.cos(aa)*l,y2:cy+Math.sin(aa)*l,w:7})}return r}
  if(t===15){const r=[],cw=(R-L)/6;for(let i=0;i<6;i++){if(Math.abs(i-o.pc)<=1)continue;if(hsh(o.seed+i*5.1)<.65)r.push({k:'r',x:L+i*cw+2,y:o.y,w:cw-4,h:o.h})}return r}
  if(t===16){const aa=Math.sin(sec*1.2+o.a)*1.2,l=54;return[{k:'s',x1:o.c-Math.cos(aa)*l,y1:cy-Math.sin(aa)*l,x2:o.c+Math.cos(aa)*l,y2:cy+Math.sin(aa)*l,w:8}]}
  if(t===17)return bar(o.c,o.gw,o).concat(bar(o.c+o.d,o.gw,{y:o.y-58,h:o.h}),bar(o.c+2*o.d,o.gw,{y:o.y-116,h:o.h}));
@@ -383,30 +390,38 @@ function watchAd(){
  clearInterval(adTimer);adTimer=setInterval(function(){n--;if(n>0)t.innerText='Pub simulée... '+n+' s';else{clearInterval(adTimer);t.innerText='Récompense prête !';b.disabled=false}},1000);
 }
 
-// --- ASSOCIATION SÉCURISÉE DES BOUTONS DE CLICS (Évite les blocages mobiles) ---
-document.getElementById('mode0Btn').onclick = () => { vibrate(30); startSelectedMode(0); };
-document.getElementById('mode1Btn').onclick = () => { vibrate(30); startSelectedMode(1); };
-document.getElementById('mode2Btn').onclick = () => { vibrate(30); startSelectedMode(2); };
-document.getElementById('mode3Btn').onclick = () => { vibrate(30); startSelectedMode(3); };
+// Handler de clics direct sans conflit
+function bindBtn(id, fn){
+  const el = document.getElementById(id);
+  if(el){
+    el.addEventListener('click', (e)=>{ e.stopPropagation(); vibrate(20); fn(); });
+  }
+}
 
-document.getElementById('openShopBtn').onclick = () => { vibrate(20); openShop(); };
-document.getElementById('closeShopBtn').onclick = () => { vibrate(20); showMenu(); };
-document.getElementById('restartBtn').onclick = () => { vibrate(30); startSelectedMode(gameMode); };
-document.getElementById('menuBtn').onclick = () => { vibrate(20); showMenu(); };
-document.getElementById('pauseMenuBtn').onclick = () => { vibrate(20); showMenu(); };
-document.getElementById('resumeBtn').onclick = () => { vibrate(20); resume(); };
-document.getElementById('reviveAdBtn').onclick = () => { vibrate(30); watchAd(); };
-document.getElementById('adCloseBtn').onclick = () => { vibrate(30); triggerRevive(); };
-document.getElementById('reviveCoinBtn').onclick = () => {
+bindBtn('mode0Btn', () => startSelectedMode(0));
+bindBtn('mode1Btn', () => startSelectedMode(1));
+bindBtn('mode2Btn', () => startSelectedMode(2));
+bindBtn('mode3Btn', () => startSelectedMode(3));
+
+bindBtn('openShopBtn', () => openShop());
+bindBtn('closeShopBtn', () => showMenu());
+bindBtn('restartBtn', () => startSelectedMode(gameMode));
+bindBtn('menuBtn', () => showMenu());
+bindBtn('pauseMenuBtn', () => showMenu());
+bindBtn('resumeBtn', () => resume());
+bindBtn('reviveAdBtn', () => watchAd());
+bindBtn('adCloseBtn', () => triggerRevive());
+bindBtn('reviveCoinBtn', () => {
   if(coins>=25){ coins-=25; save('upward_coins',coins); updateBadges(); triggerRevive(); }
-};
-document.getElementById('tabTrails').onclick = () => switchShopTab('trails');
-document.getElementById('tabThemes').onclick = () => switchShopTab('themes');
+});
+
+bindBtn('tabTrails', () => switchShopTab('trails'));
+bindBtn('tabThemes', () => switchShopTab('themes'));
 
 document.addEventListener('visibilitychange',function(){if(document.hidden)pause()});
 
 window.addEventListener('pointerdown',function(e){
- if(e.target.closest('button'))return;
+ if(e.target.closest('button') || e.target.closest('.shop-item') || e.target.closest('.shop-tab'))return;
  if(state==='READY'){state='PLAYING';beep(500,.06);vibrate(25);return}
  if(state!=='PLAYING')return;
  const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
