@@ -39,7 +39,7 @@ h2{font-size:1.5rem;font-weight:900;letter-spacing:2px;margin:0 0 8px;text-align
 <div id="gameContainer">
   <div id="menuScreen" class="screen">
     <h1>UPWARD DROP</h1>
-    <div class="subtitle">ULTIMATE 5 ÉTOILES · IDENTITÉS TOTALES</div>
+    <div class="subtitle">ULTIMATE 5 ÉTOILES · TREMPLINS STRATÉGIQUES</div>
     <div class="stat-badge" id="menuBestBadge" style="color:#00f3ff">RECORD : 0</div>
     <div class="stat-badge" id="menuCoinsBadge" style="color:#ffd700">PIÈCES : 0</div>
     
@@ -132,7 +132,7 @@ function beep(f,d,t,v){if(muted)return;try{AC=AC||new(window.AudioContext||windo
 function sndLabel(){document.querySelectorAll('.sndBtn').forEach(function(b){b.innerText='SON : '+(muted?'OFF':'ON')})}
 document.querySelectorAll('.sndBtn').forEach(function(b){b.onclick=function(e){e.stopPropagation();muted=!muted;save('upward_mute',muted?1:0);sndLabel()}});sndLabel();
 
-let state='MENU',gameMode=0; // 0: Infini, 1: Speedrun, 2: Hardcore, 3: Gold Rush
+let state='MENU',gameMode=0;
 let score=0,coins=load('upward_coins'),bestScore=load('upward_best');
 let speedrunTime=0, bestSpeedrun=load('upward_best_sr')||999999;
 let cameraY=0,T=0,nextY=0,shake=0,bannerT=0,reviveCount=0,inv=0,pathX=0,sinceHeavy=9,lastT=-1,startBest=0,recBeaten=false,recT=0;
@@ -156,10 +156,10 @@ let worldIdx=0,currentWorld=WORLDS[0];
 const diff=()=> gameMode===2 ? Math.min(1.5, score/4000) : Math.min(1, score/10000);
 const lvl=()=>Math.floor(score/100)+1;
 const ball={x:0,y:0,r:10,vx:1.4,vy:-2,trail:[]};
-let obstacles=[],items=[],boosters=[],parts=[],stars=[],flames=[];
+let obstacles=[],items=[],boosters=[],parts=[],stars=[],fireSparks=[];
 
 for(let i=0;i<90;i++)stars.push({x:Math.random()*420,y:Math.random()*850,size:Math.random()*2.5+.8,speed:Math.random()*.7+.2});
-for(let i=0;i<45;i++)flames.push({x:Math.random()*420,y:Math.random()*640,vy:-(Math.random()*4+2.5),size:Math.random()*5+2,color:Math.random()>.5?'#ff2200':'#ff9900'});
+for(let i=0;i<50;i++)fireSparks.push({x:Math.random()*420,y:Math.random()*850,vy:-(Math.random()*5+3),vx:(Math.random()-0.5)*2,size:Math.random()*4+1.5,color:Math.random()>.4?'#ff2200':'#ffaa00',alpha:Math.random()});
 
 function updateBadges(){
   const badgeBest = document.getElementById('menuBestBadge');
@@ -292,9 +292,11 @@ function spawnObstacle(y){
   }
  }
 
- if(gameMode!==2 && Math.random()<0.35){
+ // --- TREMPLINS STRATÉGIQUES DANS LES ZONES DIFFICILES ---
+ // Plus le score monte ou dans les modes intenses, plus les tremplins apparaissent au cœur des pièges pour sauter par-dessus
+ if(gameMode!==2 && (score > 400 || Math.random()<0.45)){
   let bX = Math.max(L+50, Math.min(R-50, cx + (Math.random()*2-1)*40));
-  boosters.push({x: bX, y: y - 55, w: 48, h: 12, hit: false});
+  boosters.push({x: bX, y: y - 55, w: 52, h: 12, hit: false});
  }
 
  pathX=cx;obstacles.push(o);
@@ -456,7 +458,10 @@ function step(){
  if(boostTimer > 0) boostTimer--;
 
  stars.forEach(function(s){s.y+=s.speed;if(s.y>H){s.y=0;s.x=Math.random()*W}});
- flames.forEach(function(p){p.y+=p.vy;if(p.y<0){p.y=H;p.x=Math.random()*W}});
+ fireSparks.forEach(function(p){
+   p.y+=p.vy; p.x+=p.vx;
+   if(p.y<0){p.y=H;p.x=Math.random()*W}
+ });
 
  parts=parts.filter(function(p){p.x+=p.vx;p.y+=p.vy;p.vy+=.05;return(p.l-=.025)>0});
  if(state!=='PLAYING')return;
@@ -464,7 +469,7 @@ function step(){
  if(gameMode===1) speedrunTime++;
 
  let waveMult = 1 + 0.1 * Math.sin(T * 0.04);
- let boostMult = boostTimer > 0 ? 1.65 : 1.0;
+ let boostMult = boostTimer > 0 ? 1.75 : 1.0; // Propulsion boost renforcée pour sauter par-dessus les obstacles
  
  const sm = (gameMode===2 ? 1.45 : 1 + .4 * diff()) * waveMult * boostMult;
  const dir=Math.sign(ball.vx)||1;
@@ -474,9 +479,9 @@ function step(){
  
  ball.x+=ball.vx;ball.y+=ball.vy;
  
- let maxTrailLen = Math.min(60, 16 + Math.floor(coins / 2));
+ // --- TRAÎNÉE D'ORIGINE REMISE PROPRE ET COURTE ---
  ball.trail.push({x:ball.x,y:ball.y});
- if(ball.trail.length > maxTrailLen) ball.trail.shift();
+ if(ball.trail.length > 8) ball.trail.shift();
  
  const hs=Math.floor(-ball.y/6);if(hs>score)score=hs;
 
@@ -509,19 +514,20 @@ function step(){
   if(!it.got&&Math.hypot(ball.x-it.x,ball.y-it.y)<ball.r+it.r+4){it.got=true;coins++;save('upward_coins',coins);beep(900,.08,'triangle',.05);burst(it.x,it.y,'#ffd700',8,2.5);vibrate(30)}
  });
 
+ // Détection des tremplins boost
  boosters.forEach(function(b){
-  if(!b.hit && Math.abs(ball.x - b.x) < b.w/2 + 5 && Math.abs(ball.y - b.y) < 14){
+  if(!b.hit && Math.abs(ball.x - b.x) < b.w/2 + 6 && Math.abs(ball.y - b.y) < 16){
     b.hit = true;
-    boostTimer = 75;
-    beep(1350, .2, 'triangle', .1);
-    burst(b.x, b.y, '#ffd700', 20, 5);
-    vibrate([50, 50]);
+    boostTimer = 65;
+    beep(1400, .2, 'triangle', .1);
+    burst(b.x, b.y, '#ffd700', 22, 6);
+    vibrate([60, 60]);
   }
  });
 
  if(!inv){
   for(let i=0;i<obstacles.length;i++){
-   const o=obstacles.get?obstacles.get(i):obstacles[i];
+   const o=obstacles[i];
    if(Math.abs(o.y-ball.y)<140){
     const ps=prims(o);
     if(ps.some(function(p){return hitP(p,ball.x,ball.y,ball.r+8)})){
@@ -536,30 +542,23 @@ function step(){
 function draw(){
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.globalAlpha=1;ctx.shadowBlur=0;
  
- // --- RENDU GRAPHIQUE TOTALEMENT DIFFÉRENCIÉ PAR MODE ---
  if(gameMode===2){
-  // HARDCORE : L'ENFER DE FEU ENFLAMMÉ
   let grad = ctx.createLinearGradient(0,0,0,H);
-  grad.addColorStop(0,'#1a0202'); grad.addColorStop(1,'#080000');
+  grad.addColorStop(0,'#1a0300'); grad.addColorStop(1,'#050000');
   ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
-  
-  // Particules de flammes montantes
-  flames.forEach(p=>{
-    ctx.fillStyle=p.color; ctx.shadowBlur=10; ctx.shadowColor=p.color;
-    ctx.fillRect(p.x, p.y, p.size, p.size*4);
+  fireSparks.forEach(p=>{
+    ctx.fillStyle=p.color; ctx.shadowBlur=12; ctx.shadowColor=p.color;
+    ctx.fillRect(p.x, p.y, p.size, p.size);
   });
   ctx.shadowBlur=0;
  } else if(gameMode===3){
-  // GOLD RUSH : COFFRE FORT DORÉ
   ctx.fillStyle='#120e02';ctx.fillRect(0,0,W,H);
   stars.forEach(s=>{ ctx.fillStyle='rgba(255,215,0,0.6)';ctx.fillRect(s.x,s.y,s.size*1.8,s.size*1.8); });
  } else if(gameMode===1){
-  // SPEEDRUN : CYBER SPRINT
   ctx.fillStyle='#020814';ctx.fillRect(0,0,W,H);
   ctx.strokeStyle='rgba(0,243,255,0.2)';ctx.lineWidth=1;
   for(let x=0;x<W;x+=25){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
  } else {
-  // MODE INFINI : MONDES ÉVOLUTIFS
   ctx.fillStyle=currentWorld.bg;ctx.fillRect(0,0,W,H);
   stars.forEach(s=>{ ctx.fillStyle=currentWorld.starCol;ctx.fillRect(s.x,s.y,s.size,s.size); });
  }
@@ -589,13 +588,15 @@ function draw(){
   });
  });
 
+ // --- DESSIN DES TREMPLINS (BOOSTERS) ---
  boosters.forEach(function(b){
   if(!b.hit){
     ctx.save();
-    ctx.fillStyle='#ffd700';ctx.shadowColor='#ffd700';ctx.shadowBlur=20;
+    ctx.fillStyle='#ffd700';ctx.shadowColor='#ffd700';ctx.shadowBlur=22;
     ctx.fillRect(b.x - b.w/2, b.y - b.h/2, b.w, b.h);
-    ctx.fillStyle='#000';ctx.font='900 9px sans-serif';ctx.textAlign='center';
-    ctx.fillText('▲ TURBO ▲', b.x, b.y + 3);
+    // Flèches lumineuses du tremplin
+    ctx.fillStyle='#000';ctx.font='900 10px sans-serif';ctx.textAlign='center';
+    ctx.fillText('▲ SAUT ▲', b.x, b.y + 3);
     ctx.restore();
   }
  });
@@ -604,18 +605,19 @@ function draw(){
  items.forEach(function(it){if(!it.got){ctx.beginPath();ctx.arc(it.x,it.y,it.r,0,6.283);ctx.fill()}});
  ctx.shadowBlur=0;
  
+ // Traînée d'origine propre et courte
  for(let i=0;i<ball.trail.length;i++){
   const t=ball.trail[i],r=i/ball.trail.length;
-  let tCol = gameMode===2 ? 'rgba(255,80,0,'+(r*.9)+')' : (gameMode===3 ? 'rgba(255,215,0,'+(r*.95)+')':'hsla('+(gameMode===0?currentWorld.hue:180)+',100%,60%,'+(r*.75)+')');
-  if(boostTimer > 0) tCol='rgba(255,215,0,'+(r*0.98)+')';
-  ctx.fillStyle=tCol;ctx.beginPath();ctx.arc(t.x,t.y,ball.r*r*1.4,0,6.283);ctx.fill();
+  let tCol = gameMode===2 ? 'rgba(255,80,0,'+(r*.8)+')' : (gameMode===3 ? 'rgba(255,215,0,'+(r*.85)+')':'hsla('+(gameMode===0?currentWorld.hue:180)+',100%,60%,'+(r*.65)+')');
+  if(boostTimer > 0) tCol='rgba(255,215,0,'+(r*0.95)+')';
+  ctx.fillStyle=tCol;ctx.beginPath();ctx.arc(t.x,t.y,ball.r*r*0.9,0,6.283);ctx.fill();
  }
 
  parts.forEach(function(p){ctx.globalAlpha=Math.max(0,p.l);ctx.fillStyle=p.c;ctx.fillRect(p.x-1.5,p.y-1.5,3,3)});
  ctx.globalAlpha=1;
  
  if(state!=='DEAD'&&state!=='GAMEOVER'&&!(inv>0&&Math.floor(T/5)%2)){
-  ctx.fillStyle=gameMode===2?'#ff4400':'#fff';ctx.shadowBlur=30;ctx.shadowColor=borderCol;
+  ctx.fillStyle=gameMode===2?'#ff4400':'#fff';ctx.shadowBlur=28;ctx.shadowColor=borderCol;
   ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,6.283);ctx.fill();ctx.shadowBlur=0;
  }
  ctx.restore();
@@ -640,7 +642,7 @@ function draw(){
   ctx.textAlign='right';ctx.font='700 15px sans-serif';ctx.fillText(coins,W-32,st+30);
   ctx.fillStyle='rgba(255,255,255,.7)';ctx.fillRect(18,st+17,4,16);ctx.fillRect(27,st+17,4,16);
   
-  if(bannerT>0 && gameMode===0){ctx.globalAlpha=Math.min(1,bannerT/40);ctx.textAlign='center';ctx.fillStyle='hsl('+currentWorld.hue+',100%,70%)';ctx.shadowBlur=16;ctx.shadowColor=borderCol;ctx.font='11px sans-serif';ctx.fillText('NOUVEAU MONDE',W/2,H*.27-26);ctx.font='bold 26px sans-serif';ctx.fillText(currentWorld.name,W/2,H*.27);ctx.shadowBlur=0;ctx.globalAlpha=1}
+  if(bannerT>0 && gameMode==0){ctx.globalAlpha=Math.min(1,bannerT/40);ctx.textAlign='center';ctx.fillStyle='hsl('+currentWorld.hue+',100%,70%)';ctx.shadowBlur=16;ctx.shadowColor=borderCol;ctx.font='11px sans-serif';ctx.fillText('NOUVEAU MONDE',W/2,H*.27-26);ctx.font='bold 26px sans-serif';ctx.fillText(currentWorld.name,W/2,H*.27);ctx.shadowBlur=0;ctx.globalAlpha=1}
   if(recT>0){ctx.globalAlpha=Math.min(1,recT/40);ctx.textAlign='center';ctx.fillStyle='#ffd700';ctx.shadowBlur=18;ctx.shadowColor='#ffd700';ctx.font='bold 22px sans-serif';ctx.fillText('NOUVEAU RECORD !',W/2,H*.38);ctx.shadowBlur=0;ctx.globalAlpha=1}
   if(state==='READY'){ctx.globalAlpha=.55+.45*Math.sin(T/10);ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='bold 18px sans-serif';ctx.fillText('TOUCHE POUR COMMENCER',W/2,H*.5);ctx.font='13px sans-serif';ctx.fillStyle='rgba(255,255,255,.7)';ctx.fillText('Tape pour changer de côté',W/2,H*.5+26);ctx.globalAlpha=1}
  }
