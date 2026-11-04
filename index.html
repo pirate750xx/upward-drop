@@ -39,7 +39,7 @@ h2{font-size:1.5rem;font-weight:900;letter-spacing:2px;margin:0 0 8px;text-align
 <div id="gameContainer">
   <div id="menuScreen" class="screen">
     <h1>UPWARD DROP</h1>
-    <div class="subtitle">ULTIMATE 5 ÉTOILES · TREMPLINS STRATÉGIQUES</div>
+    <div class="subtitle">ULTIMATE 5 ÉTOILES · JUMP & TURBO</div>
     <div class="stat-badge" id="menuBestBadge" style="color:#00f3ff">RECORD : 0</div>
     <div class="stat-badge" id="menuCoinsBadge" style="color:#ffd700">PIÈCES : 0</div>
     
@@ -156,7 +156,7 @@ let worldIdx=0,currentWorld=WORLDS[0];
 const diff=()=> gameMode===2 ? Math.min(1.5, score/4000) : Math.min(1, score/10000);
 const lvl=()=>Math.floor(score/100)+1;
 const ball={x:0,y:0,r:10,vx:1.4,vy:-2,trail:[]};
-let obstacles=[],items=[],boosters=[],parts=[],stars=[],fireSparks=[];
+let obstacles=[],items=[],boosters=[],jumps=[],parts=[],stars=[],fireSparks=[];
 
 for(let i=0;i<90;i++)stars.push({x:Math.random()*420,y:Math.random()*850,size:Math.random()*2.5+.8,speed:Math.random()*.7+.2});
 for(let i=0;i<50;i++)fireSparks.push({x:Math.random()*420,y:Math.random()*850,vy:-(Math.random()*5+3),vx:(Math.random()-0.5)*2,size:Math.random()*4+1.5,color:Math.random()>.4?'#ff2200':'#ffaa00',alpha:Math.random()});
@@ -215,7 +215,7 @@ function buildShop(){
         e.stopPropagation();
         if(unlocked){ currentTheme=idx; save('upward_bg_theme',idx); buildShop(); vibrate(20); }
         else if(coins>=th.cost){
-          coins-=th.cost; save('upward_coins',coins);
+          coins-=th.cost; save('upward_bg_theme',idx);
           unlockedThemes.push(idx); save('upward_unlocked_themes',JSON.stringify(unlockedThemes));
           currentTheme=idx; save('upward_bg_theme',idx);
           updateBadges(); buildShop(); vibrate(50); beep(880,.2,'triangle',.05);
@@ -235,7 +235,7 @@ function initGame(){
  let startVy = gameMode===1 ? -3.1 : (gameMode===2 ? -3.2 : -2.0);
 
  ball.x=W/2;ball.y=H-120;ball.vx=startVx;ball.vy=startVy;ball.trail=[];
- obstacles=[];items=[];boosters=[];parts=[];worldIdx=0;currentWorld=WORLDS[0];
+ obstacles=[];items=[];boosters=[];jumps=[];parts=[];worldIdx=0;currentWorld=WORLDS[0];
  
  cameraY=ball.y-H*.8;pathX=W/2;sinceHeavy=9;lastT=-1;nextY=H-300;fillWorld();
  burst(ball.x,ball.y,gameMode===2?'#ff2200':(gameMode===3?'#ffd700':'#00f3ff'),30,5);vibrate(40);
@@ -292,11 +292,18 @@ function spawnObstacle(y){
   }
  }
 
- // --- TREMPLINS STRATÉGIQUES DANS LES ZONES DIFFICILES ---
- // Plus le score monte ou dans les modes intenses, plus les tremplins apparaissent au cœur des pièges pour sauter par-dessus
- if(gameMode!==2 && (score > 400 || Math.random()<0.45)){
-  let bX = Math.max(L+50, Math.min(R-50, cx + (Math.random()*2-1)*40));
-  boosters.push({x: bX, y: y - 55, w: 52, h: 12, hit: false});
+ // TREMPLINS DE SAUT (EN OR) ET TURBO-BOOSTERS (EN CYAN)
+ if(gameMode!==2){
+  let rnd = Math.random();
+  if(rnd < 0.25){
+    // Tremplin de saut
+    let jX = Math.max(L+50, Math.min(R-50, cx + (Math.random()*2-1)*40));
+    jumps.push({x: jX, y: y - 50, w: 54, h: 14, hit: false});
+  } else if(rnd < 0.50){
+    // Turbo Booster
+    let bX = Math.max(L+50, Math.min(R-50, cx + (Math.random()*2-1)*40));
+    boosters.push({x: bX, y: y - 50, w: 48, h: 12, hit: false});
+  }
  }
 
  pathX=cx;obstacles.push(o);
@@ -404,6 +411,7 @@ function triggerRevive(){
  obstacles=obstacles.filter(function(o){return Math.abs(o.y-ball.y)>240});
  items=items.filter(function(i){return Math.abs(i.y-ball.y)>240});
  boosters=boosters.filter(function(b){return Math.abs(b.y-ball.y)>240});
+ jumps=jumps.filter(function(j){return Math.abs(j.y-ball.y)>240});
  inv=150;ball.vx=Math.abs(ball.vx);show('gameOverScreen',false);show('adScreen',false);state='PLAYING';beep(660,.2,'triangle',.06);vibrate(50);
 }
 let adTimer;
@@ -468,10 +476,8 @@ function step(){
 
  if(gameMode===1) speedrunTime++;
 
- let waveMult = 1 + 0.1 * Math.sin(T * 0.04);
- let boostMult = boostTimer > 0 ? 1.75 : 1.0; // Propulsion boost renforcée pour sauter par-dessus les obstacles
- 
- const sm = (gameMode===2 ? 1.45 : 1 + .4 * diff()) * waveMult * boostMult;
+ let boostMult = boostTimer > 0 ? 1.6 : 1.0;
+ const sm = (gameMode===2 ? 1.45 : 1 + .4 * diff()) * boostMult;
  const dir=Math.sign(ball.vx)||1;
  
  ball.vx=dir * (gameMode===1?2.5:(gameMode===2?2.3:1.4)) * sm;
@@ -479,7 +485,7 @@ function step(){
  
  ball.x+=ball.vx;ball.y+=ball.vy;
  
- // --- TRAÎNÉE D'ORIGINE REMISE PROPRE ET COURTE ---
+ // Traînée d'origine fine et courte
  ball.trail.push({x:ball.x,y:ball.y});
  if(ball.trail.length > 8) ball.trail.shift();
  
@@ -509,19 +515,32 @@ function step(){
  obstacles=obstacles.filter(function(o){return o.y<cameraY+H+120});
  items=items.filter(function(i){return i.y<cameraY+H+100});
  boosters=boosters.filter(function(b){return b.y<cameraY+H+100});
+ jumps=jumps.filter(function(j){return j.y<cameraY+H+100});
 
  items.forEach(function(it){
   if(!it.got&&Math.hypot(ball.x-it.x,ball.y-it.y)<ball.r+it.r+4){it.got=true;coins++;save('upward_coins',coins);beep(900,.08,'triangle',.05);burst(it.x,it.y,'#ffd700',8,2.5);vibrate(30)}
  });
 
- // Détection des tremplins boost
+ // TREMPLINS DE SAUT (Impulsion 300px vers le haut)
+ jumps.forEach(function(j){
+  if(!j.hit && Math.abs(ball.x - j.x) < j.w/2 + 8 && Math.abs(ball.y - j.y) < 18){
+    j.hit = true;
+    ball.y -= 300;
+    inv = 60;
+    beep(1500, .25, 'triangle', .12);
+    burst(j.x, j.y, '#ffd700', 30, 7);
+    vibrate([40, 40, 40]);
+  }
+ });
+
+ // TURBO BOOSTERS (Vitesse temporaire)
  boosters.forEach(function(b){
-  if(!b.hit && Math.abs(ball.x - b.x) < b.w/2 + 6 && Math.abs(ball.y - b.y) < 16){
+  if(!b.hit && Math.abs(ball.x - b.x) < b.w/2 + 6 && Math.abs(ball.y - b.y) < 14){
     b.hit = true;
-    boostTimer = 65;
-    beep(1400, .2, 'triangle', .1);
-    burst(b.x, b.y, '#ffd700', 22, 6);
-    vibrate([60, 60]);
+    boostTimer = 75;
+    beep(1200, .18, 'triangle', .08);
+    burst(b.x, b.y, '#00f3ff', 20, 5);
+    vibrate(35);
   }
  });
 
@@ -588,15 +607,26 @@ function draw(){
   });
  });
 
- // --- DESSIN DES TREMPLINS (BOOSTERS) ---
+ // DESSIN DES TREMPLINS DE SAUT (OR)
+ jumps.forEach(function(j){
+  if(!j.hit){
+    ctx.save();
+    ctx.fillStyle='#ffd700';ctx.shadowColor='#ffd700';ctx.shadowBlur=22;
+    ctx.fillRect(j.x - j.w/2, j.y - j.h/2, j.w, j.h);
+    ctx.fillStyle='#000';ctx.font='900 10px sans-serif';ctx.textAlign='center';
+    ctx.fillText('▲ SAUT ▲', j.x, j.y + 3);
+    ctx.restore();
+  }
+ });
+
+ // DESSIN DES TURBO BOOSTERS (CYAN)
  boosters.forEach(function(b){
   if(!b.hit){
     ctx.save();
-    ctx.fillStyle='#ffd700';ctx.shadowColor='#ffd700';ctx.shadowBlur=22;
+    ctx.fillStyle='#00f3ff';ctx.shadowColor='#00f3ff';ctx.shadowBlur=18;
     ctx.fillRect(b.x - b.w/2, b.y - b.h/2, b.w, b.h);
-    // Flèches lumineuses du tremplin
-    ctx.fillStyle='#000';ctx.font='900 10px sans-serif';ctx.textAlign='center';
-    ctx.fillText('▲ SAUT ▲', b.x, b.y + 3);
+    ctx.fillStyle='#000';ctx.font='900 9px sans-serif';ctx.textAlign='center';
+    ctx.fillText('⚡ TURBO ⚡', b.x, b.y + 3);
     ctx.restore();
   }
  });
@@ -605,11 +635,10 @@ function draw(){
  items.forEach(function(it){if(!it.got){ctx.beginPath();ctx.arc(it.x,it.y,it.r,0,6.283);ctx.fill()}});
  ctx.shadowBlur=0;
  
- // Traînée d'origine propre et courte
+ // Traînée d'origine fine
  for(let i=0;i<ball.trail.length;i++){
   const t=ball.trail[i],r=i/ball.trail.length;
   let tCol = gameMode===2 ? 'rgba(255,80,0,'+(r*.8)+')' : (gameMode===3 ? 'rgba(255,215,0,'+(r*.85)+')':'hsla('+(gameMode===0?currentWorld.hue:180)+',100%,60%,'+(r*.65)+')');
-  if(boostTimer > 0) tCol='rgba(255,215,0,'+(r*0.95)+')';
   ctx.fillStyle=tCol;ctx.beginPath();ctx.arc(t.x,t.y,ball.r*r*0.9,0,6.283);ctx.fill();
  }
 
@@ -642,7 +671,7 @@ function draw(){
   ctx.textAlign='right';ctx.font='700 15px sans-serif';ctx.fillText(coins,W-32,st+30);
   ctx.fillStyle='rgba(255,255,255,.7)';ctx.fillRect(18,st+17,4,16);ctx.fillRect(27,st+17,4,16);
   
-  if(bannerT>0 && gameMode==0){ctx.globalAlpha=Math.min(1,bannerT/40);ctx.textAlign='center';ctx.fillStyle='hsl('+currentWorld.hue+',100%,70%)';ctx.shadowBlur=16;ctx.shadowColor=borderCol;ctx.font='11px sans-serif';ctx.fillText('NOUVEAU MONDE',W/2,H*.27-26);ctx.font='bold 26px sans-serif';ctx.fillText(currentWorld.name,W/2,H*.27);ctx.shadowBlur=0;ctx.globalAlpha=1}
+  if(bannerT>0 && gameMode===0){ctx.globalAlpha=Math.min(1,bannerT/40);ctx.textAlign='center';ctx.fillStyle='hsl('+currentWorld.hue+',100%,70%)';ctx.shadowBlur=16;ctx.shadowColor=borderCol;ctx.font='11px sans-serif';ctx.fillText('NOUVEAU MONDE',W/2,H*.27-26);ctx.font='bold 26px sans-serif';ctx.fillText(currentWorld.name,W/2,H*.27);ctx.shadowBlur=0;ctx.globalAlpha=1}
   if(recT>0){ctx.globalAlpha=Math.min(1,recT/40);ctx.textAlign='center';ctx.fillStyle='#ffd700';ctx.shadowBlur=18;ctx.shadowColor='#ffd700';ctx.font='bold 22px sans-serif';ctx.fillText('NOUVEAU RECORD !',W/2,H*.38);ctx.shadowBlur=0;ctx.globalAlpha=1}
   if(state==='READY'){ctx.globalAlpha=.55+.45*Math.sin(T/10);ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='bold 18px sans-serif';ctx.fillText('TOUCHE POUR COMMENCER',W/2,H*.5);ctx.font='13px sans-serif';ctx.fillStyle='rgba(255,255,255,.7)';ctx.fillText('Tape pour changer de côté',W/2,H*.5+26);ctx.globalAlpha=1}
  }
