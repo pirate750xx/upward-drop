@@ -149,7 +149,7 @@ let currentWorld = WORLDS[0];
 
 let ball = {
   x: canvas.width / 2,
-  y: canvas.height - 100,
+  y: canvas.height - 120,
   r: 9,
   vx: 1.3,
   vy: -2.0,
@@ -191,25 +191,25 @@ function initGame() {
   currentWorld = WORLDS[0];
 
   for(let i = 0; i < 5; i++) {
-    spawnObstacle(canvas.height - 300 - (i * 250), i);
+    spawnObstacle(canvas.height - 300 - (i * 260), i);
   }
 }
 
 function spawnObstacle(yPos, index) {
   let level = Math.floor(score / 40) + 1;
   
-  // Diversification des formes selon un cycle ou aléatoire intelligent
-  let type = index % 3; 
-  if (level >= 3) {
-    type = Math.floor(Math.random() * 3); // 0: Trou milieu, 1: Slalom gauche/droite, 2: Blocs multiples
-  }
+  // Génération ultra-variée pour éviter l'effet en boucle monotone
+  let patternRandom = Math.random();
+  let type = 0;
+  if (patternRandom < 0.35) type = 0;      // Barre avec ouverture centrale variable
+  else if (patternRandom < 0.7) type = 1;  // Slalom latéral (gauche ou droite)
+  else type = 2;                           // Blocs multiples / passages étroits
 
-  let obs = { y: yPos, h: 14, type: type, parts: [] };
+  let obs = { y: yPos, h: 14, parts: [] };
 
   if (type === 0) {
-    // Type 0 : Barre avec une ouverture centrale
-    let gapWidth = Math.max(130 - (level * 2), 80);
-    let gapX = 40 + Math.random() * (canvas.width - gapWidth - 80);
+    let gapWidth = Math.max(130 - (level * 1.8), 75);
+    let gapX = 35 + Math.random() * (canvas.width - gapWidth - 70);
     obs.parts.push({ x: 15, w: gapX - 15 });
     obs.parts.push({ x: gapX + gapWidth, w: (canvas.width - 15) - (gapX + gapWidth) });
 
@@ -218,13 +218,13 @@ function spawnObstacle(yPos, index) {
     }
   } 
   else if (type === 1) {
-    // Type 1 : Style Slalom (passage sur les côtés ou alterné)
-    let sideChoice = Math.random() > 0.5 ? 'left' : 'right';
-    if (sideChoice === 'left') {
-      obs.parts.push({ x: 15, w: 90 + Math.random() * 30 }); // Bloque tout à gauche, passage à droite
+    let side = Math.random() > 0.5 ? 'left' : 'right';
+    if (side === 'left') {
+      let blockW = 100 + Math.random() * 50;
+      obs.parts.push({ x: 15, w: blockW });
     } else {
-      let rightW = 90 + Math.random() * 30;
-      obs.parts.push({ x: canvas.width - 15 - rightW, w: rightW }); // Bloque tout à droite, passage à gauche
+      let blockW = 100 + Math.random() * 50;
+      obs.parts.push({ x: canvas.width - 15 - blockW, w: blockW });
     }
 
     if (Math.random() > 0.3) {
@@ -232,14 +232,13 @@ function spawnObstacle(yPos, index) {
     }
   } 
   else {
-    // Type 2 : Double blocs / Pilier central
-    let centerW = Math.max(80 - (level * 1.5), 45);
-    let centerX = (canvas.width - centerW) / 2;
+    let centerW = Math.max(90 - (level * 1.5), 50);
+    let centerX = 50 + Math.random() * (canvas.width - centerW - 100);
     obs.parts.push({ x: centerX, w: centerW });
 
     if (Math.random() > 0.3) {
-      items.push({ x: centerX - 35, y: yPos - 45, r: 8, collected: false });
-      items.push({ x: centerX + centerW + 35, y: yPos - 45, r: 8, collected: false });
+      items.push({ x: centerX - 30, y: yPos - 45, r: 8, collected: false });
+      items.push({ x: centerX + centerW + 30, y: yPos - 45, r: 8, collected: false });
     }
   }
 
@@ -275,8 +274,7 @@ window.addEventListener('pointerdown', (e) => {
 function update() {
   if (state !== 'PLAYING') return;
 
-  // Accélération très progressive
-  let speedMult = 1 + (score / 1800); 
+  let speedMult = 1 + (score / 2000); 
   let currentDir = Math.sign(ball.vx) || 1;
   ball.vx = currentDir * (1.3 * speedMult);
   ball.vy = -2.0 * speedMult;
@@ -301,13 +299,13 @@ function update() {
     ball.vx = -Math.abs(ball.vx);
   }
 
-  // Caméra abaissée à 58% pour laisser de l'espace visuel au-dessus de la balle
-  let targetCameraY = ball.y - canvas.height * 0.58;
+  // Caméra descendue plus bas (à 65%) pour voir largement au-dessus de la balle
+  let targetCameraY = ball.y - canvas.height * 0.65;
   cameraY += (targetCameraY - cameraY) * 0.1;
 
   let lastY = obstacles.length > 0 ? obstacles[obstacles.length - 1].y : cameraY;
   if(lastY > cameraY - canvas.height) {
-    let spacing = Math.max(260 - (score / 12), 200);
+    let spacing = Math.max(260 - (score / 15), 195);
     spawnObstacle(lastY - spacing, obstacles.length);
   }
 
