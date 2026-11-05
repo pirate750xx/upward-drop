@@ -223,7 +223,6 @@ const MODES=['INFINI','SPEEDRUN','HARDCORE'];
 const FAM={neon:'NÉON',magma:'MAGMA',glace:'GLACE',nature:'NATURE',or:'OR',matrix:'MATRIX'},FAMS=['neon','magma','glace','nature','or','matrix'];
 const FXFAM={stars:'neon',aurora:'neon',vortex:'neon',speed:'neon',grid:'neon',rings:'neon',embers:'magma',ash:'magma',lightning:'magma',snow:'glace',bubbles:'glace',hex:'glace',fireflies:'nature',petals:'nature',dust:'or',sparkle:'or',confetti:'or',rain:'matrix'};
 function mkW(name,h,ho,fx,pu){return{name:name,h:h,ho:ho,fx:fx,pulse:!!pu,fam:FXFAM[fx],wall:'hsl('+h+',100%,60%)',obs:'hsl('+ho+',100%,62%)'}}
-/* 47 mondes, aucun doublon entre catégories : [nom, teinte murs, teinte obstacles, effet de fond, pulse] */
 const CAT=[
  {len:500,w:[['CYAN NÉON',185,320,'stars'],['AURORE BORÉALE',150,290,'aurora'],['VORTEX VIOLET',275,55,'vortex'],['OCÉAN PROFOND',205,20,'bubbles'],['FORÊT LUMINEUSE',120,320,'fireflies'],['SAKURA NÉON',330,175,'petals'],['GLACIER',195,335,'snow'],['ÉLECTRO DISCO',300,150,'stars',1],['CRISTAL HEX',170,300,'hex'],['NÉBULEUSE',260,40,'stars'],['LAGON TURQUOISE',175,345,'bubbles'],['CRÉPUSCULE',20,220,'aurora'],['PLASMA',310,120,'vortex'],['COSMOS ENDORMI',230,60,'stars'],['NÉON PARADISE',340,190,'aurora',1],['TRÉSOR',48,15,'dust'],['TEMPLE DORÉ',55,280,'sparkle'],['PHARAON',42,190,'dust'],['PALAIS',35,260,'dust'],['DIAMANT',190,50,'sparkle']]},
  {len:230,w:[['CYBER SPRINT',190,320,'speed'],['TUNNEL LASER',300,90,'speed'],['HYPERSPACE',225,45,'speed'],['MATRIX CODE',140,320,'rain'],['TURBO GRID',170,335,'grid'],['ONDE SONAR',200,30,'rings'],['DATA STREAM',160,280,'rain'],['PULSE DRIVE',280,130,'rings',1],['FIBRE OPTIQUE',210,340,'speed'],['LIGNE D\'ARRIVÉE',120,320,'grid'],['CASINO',350,50,'confetti'],['JACKPOT',48,300,'confetti',1],['LINGOTS',50,330,'sparkle']]},
@@ -232,9 +231,9 @@ const CAT=[
 const WORLDS=CAT.map(c=>c.w.map(a=>mkW(a[0],a[1],a[2],a[3],a[4]))),WLEN=CAT.map(c=>c.len),MAXREV=3;
 const RN=['COMMUN','RARE','ÉPIQUE'];
 const BALLS=[['Blanche','neon',0,0,190,''],['Cyan pur','neon',0,60,185,''],['Cyber lumineuse','neon',1,350,185,'ring'],['Supernova','neon',2,1200,310,'flare ring'],['Braise','magma',0,70,22,''],['Braise incandescente','magma',1,450,18,'ember'],['Phénix','magma',2,1500,8,'ember flare'],['Givre','glace',0,70,195,''],['Cristal givré','glace',1,450,190,'frost'],['Zéro absolu','glace',2,1200,200,'frost flare'],['Feuille','nature',0,60,125,''],['Esprit sylvestre','nature',1,400,110,'orbit'],['Pépite','or',0,90,48,''],['Lingot royal','or',1,600,50,'spark ring'],['Code','matrix',0,70,140,''],['Néo Matrix','matrix',1,400,145,'glyph']].map((a,i)=>({id:i,n:a[0],fam:a[1],r:a[2],c:a[3],h:a[4],fx:a[5]}));
-const TRAILS=[['Néon','neon',0,0,'solid',185],['Rose néon','neon',0,60,'solid',320],['Plasma double','neon',1,350,'double',185,320],['Comète','neon',2,1000,'comet',200],['Arc-en-ciel','neon',1,500,'rainbow',0],['Braise','magma',0,70,'solid',22],['Traînée de lave','magma',1,450,'fire',10],['Inferno','magma',2,1300,'fire2',5],['Givre','glace',0,70,'solid',195],['Cristaux de glace','glace',1,400,'ice',195],['Vert nature','nature',0,60,'solid',125],['Lucioles','nature',1,350,'sparks',110],['Or pur','or',0,80,'solid',48],['Poussière d\'étoiles','or',1,550,'galaxy',48],['Code vert','matrix',0,60,'solid',140],['Glitch matrix','matrix',1,380,'glitch',140]].map((a,i)=>({id:i,n:a[0],fam:a[1],r:a[2],c:a[3],k:a[4],h:a[5],h2:a[6]||0}));
-const BGS=[['Auto (selon le monde)',null,0,0,null,0,0],['Nuit étoilée','neon',0,80,'stars',230,320],['Grille synthwave','neon',1,380,'grid',300,185],['Vortex cosmique','neon',1,420,'vortex',275,55],['Aurore polaire','glace',1,450,'aurora',160,290],['Blizzard','glace',0,90,'snow',200,330],['Lagon de bulles','glace',0,100,'bubbles',200,20],['Cristal hex','glace',1,500,'hex',185,300],['Braises vives','magma',0,90,'embers',15,45],['Orage rouge','magma',1,550,'lightning',350,45],['Cendres','magma',0,100,'ash',10,200],['Forêt lumineuse','nature',1,400,'fireflies',125,320],['Sakura','nature',1,450,'petals',330,175],['Poussière d\'or','or',0,100,'dust',48,15],['Constellations d\'or','or',1,600,'sparkle',50,330],['Casino confettis','or',1,500,'confetti',350,50],['Pluie matrix','matrix',0,100,'rain',140,320],['Vitesse laser','matrix',1,420,'speed',150,320]].map((a,i)=>({id:i,n:a[0],fam:a[1],r:a[2],c:a[3],fx:a[4],h:a[5],ho:a[6]}));
-const PACKS=[['Pack Néon','neon',3,3,2,1900],['Pack Magma','magma',6,7,8,2500],['Pack Glace','glace',9,9,7,1600],['Pack Nature','nature',11,11,11,900],['Pack Or','or',13,13,14,1300],['Pack Matrix','matrix',15,15,16,950]].map((a,i)=>({id:i,n:a[0],fam:a[1],b:a[2],t:a[3],g:a[4],c:a[5],r:2}));
+const TRAILS=[['Néon','neon',0,0,'solid',185],['Rose néon','neon',0,60,'solid',320],['Plasma double','neon',1,350,'double',185,320],['Comète','neon',2,1000,'comet',200],['Arc-en-ciel','neon',1,500,'rainbow',0],['Braise','magma',0,70,'solid',22],['Traînée de lave','magma',1,450,'fire',10],['Inferno','magma',2,1300,'fire2',5],['Givre','glace',0,70,'solid',195],['Cristaux de glace','glace',1,400,'ice',195],['Vert nature','nature',0,60,'solid',125],['Lucioles','nature',1,350,'sparks',110],['Or pur','or',0,80,'solid',48],['Poussière d\'étoiles','or',1,550,'galaxy',48],['Code vert','matrix',0,60,'solid',140],['Glitch matrix','matrix',1,380,'glitch',140']].map((a,i)=>({id:i,n:a[0],fam:a[1],r:a[2],c:a[3],k:a[4],h:a[5],h2:a[6]||0}));
+const BGS=[['Auto (selon le monde)',null,0,0,null,0,0],['Nuit étoilée','neon',0,80,'stars',230,320],['Grille synthwave','neon',1,380,'grid',300,185],['Vortex cosmique','neon',1,420,'vortex',275,55],['Aurore polaire','glace',1,450,'aurora',160,290],['Blizzard','glace',0,90,'snow',200,330],['Lagon de bulles','glace',0,100,'bubbles',200,20],['Cristal hex','glace',1,500,'hex',185,300],['Braises vives','magma',0,90,'embers',15,45],['Orage rouge','magma',1,550,'lightning',350,45],['Cendres','magma',0,100,'ash',10,200],['Forêt lumineuse','nature',1,400,'fireflies',125,320],['Sakura','nature',1,450,'petals',330,175],['Poussière d\'or','or',0,100,'dust',48,15],['Constellations d\'or','or',1,600,'sparkle',50,330],['Casino confettis','or',1,500,'confetti',350,50],['Pluie matrix','matrix',0,100,'rain',140,320],['Vitesse laser','matrix',1,420,'speed',150,320']].map((a,i)=>({id:i,n:a[0],fam:a[1],r:a[2],c:a[3],fx:a[4],h:a[5],ho:a[6]}));
+const PACKS=[['Pack Néon','neon',3,3,2,1900],['Pack Magma','magma',6,7,8,2500],['Pack Glace','glace',9,9,7,1600],['Pack Nature','nature',11,11,11,900],['Pack Or','or',13,13,14,1300],['Pack Matrix','matrix',15,15,16,950']].map((a,i)=>({id:i,n:a[0],fam:a[1],b:a[2],t:a[3],g:a[4],c:a[5],r:2}));
 const LIST={b:BALLS,t:TRAILS,g:BGS};
 const FAMW={neon:mkW('',185,320,'stars'),magma:mkW('',20,50,'embers'),glace:mkW('',195,335,'snow'),nature:mkW('',120,320,'fireflies'),or:mkW('',48,15,'dust'),matrix:mkW('',140,320,'rain')};
 
@@ -635,21 +634,79 @@ function step(){
   }}
  musicTick();
 }
-/* ================= RENDU : fonds, effets, obstacles, bille ================= */
+
+/* ================= RENDU : FONDS CYBERPUNK NÉON AMÉLIORÉS ================= */
 const SPR={};
 function glowSpr(h,l){const k=h+'_'+l;if(SPR[k])return SPR[k];const z=64,c=document.createElement('canvas');c.width=c.height=z;const g=c.getContext('2d'),r=g.createRadialGradient(z/2,z/2,0,z/2,z/2,z/2);
  r.addColorStop(0,'hsla('+h+',100%,96%,1)');r.addColorStop(.22,'hsla('+h+',100%,'+l+'%,.85)');r.addColorStop(.55,'hsla('+h+',100%,'+l+'%,.22)');r.addColorStop(1,'hsla('+h+',100%,'+l+'%,0)');g.fillStyle=r;g.fillRect(0,0,z,z);return SPR[k]=c}
-function makeVig(){const c=document.createElement('canvas');c.width=Math.max(2,Math.round(W/2));c.height=Math.max(2,Math.round(H/2));const g=c.getContext('2d'),r=g.createRadialGradient(c.width/2,c.height/2,c.height*.25,c.width/2,c.height/2,c.height*.78);r.addColorStop(0,'rgba(0,0,0,0)');r.addColorStop(1,'rgba(0,0,0,.62)');g.fillStyle=r;g.fillRect(0,0,c.width,c.height);vig=c}
+function makeVig(){const c=document.createElement('canvas');c.width=Math.max(2,Math.round(W/2));c.height=Math.max(2,Math.round(H/2));const g=c.getContext('2d'),r=g.createRadialGradient(c.width/2,c.height/2,c.height*.25,c.width/2,c.height/2,c.height*.78);r.addColorStop(0,'rgba(0,0,0,0)');r.addColorStop(1,'rgba(0,0,0,.75)');g.fillStyle=r;g.fillRect(0,0,c.width,c.height);vig=c}
 function dot(h,l,x,y,r,a){ctx.globalAlpha=a;ctx.drawImage(glowSpr(h,l),x-r,y-r,r*2,r*2)}
+
+/* NOUVELLE FONCTION DE FOND CYBERPUNK AMÉLIORÉE (Inspirée des références visuelles) */
 function drawBase(w,pulse,mode){
- const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'hsl('+w.h+',50%,2.5%)');g.addColorStop(.55,'hsl('+w.h+',55%,5%)');g.addColorStop(1,'hsl('+w.h+',65%,9%)');
- ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='lighter';
- if(mode===0){for(let i=0;i<2;i++)dot(i?w.ho:w.h,45,W*(.3+.4*Math.sin(T/520+i*2.4)),H*(.25+.5*i)+Math.cos(T/430+i)*30,W*.95,.2)}
- if(mode===1){[0,1].forEach(k=>{const x=k?W:0,gr=ctx.createLinearGradient(x,0,k?W-90:90,0);gr.addColorStop(0,'hsla('+w.h+',100%,60%,.2)');gr.addColorStop(1,'hsla('+w.h+',100%,60%,0)');ctx.globalAlpha=1;ctx.fillStyle=gr;ctx.fillRect(k?W-90:0,0,90,H)})}
- if(mode===2){const gr=ctx.createLinearGradient(0,H,0,H*.45);gr.addColorStop(0,'hsla('+w.ho+',100%,50%,'+(.22+.08*Math.sin(T/20))+')');gr.addColorStop(1,'hsla('+w.h+',100%,40%,0)');ctx.globalAlpha=1;ctx.fillStyle=gr;ctx.fillRect(0,H*.45,W,H*.55)}
- if(pulse){ctx.globalAlpha=.1*pulse;ctx.fillStyle='hsl('+w.h+',100%,55%)';ctx.fillRect(0,0,W,H)}
- ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+ const h=w.h, ho=w.ho;
+ // Dégradé spatial cyberpunk profond
+ const g=ctx.createLinearGradient(0,0,0,H);
+ g.addColorStop(0,'hsl('+h+',70%,3%)');
+ g.addColorStop(0.5,'hsl('+h+',80%,6%)');
+ g.addColorStop(1,'hsl('+ho+',90%,11%)');
+ ctx.fillStyle=g;
+ ctx.fillRect(0,0,W,H);
+
+ ctx.globalCompositeOperation='lighter';
+
+ // 1. Grille perspective style Synthwave / Outrun sur le bas/milieu
+ const gridY = H * 0.45;
+ ctx.strokeStyle = 'hsla('+h+', 100%, 65%, 0.25)';
+ ctx.lineWidth = 1.2;
+ 
+ // Lignes verticales de perspective fuyant vers le centre
+ const cx = W / 2;
+ for(let i = -6; i <= 6; i++) {
+  ctx.beginPath();
+  ctx.moveTo(cx, gridY);
+  ctx.lineTo(cx + i * 75, H);
+  ctx.stroke();
+ }
+ // Lignes horizontales de la grille avec effet de vitesse
+ for(let j = 0; j < 10; j++) {
+  const progress = ((T * 0.008 + j * 0.1) % 1);
+  const curY = gridY + Math.pow(progress, 2) * (H - gridY);
+  ctx.strokeStyle = 'hsla('+ho+', 100%, 70%, '+(progress * 0.4)+')';
+  ctx.beginPath();
+  ctx.moveTo(0, curY);
+  ctx.lineTo(W, curY);
+  ctx.stroke();
+ }
+
+ // 2. Effet Tunnel / Arceaux néon futuristes en arrière-plan
+ for(let k = 0; k < 4; k++) {
+  const pSize = (T * 1.5 + k * 120) % 480;
+  const alpha = Math.max(0, 1 - pSize / 480);
+  const tWidth = pSize * 0.8;
+  const tHeight = pSize * 0.5;
+  ctx.strokeStyle = k % 2 === 0 ? 'hsla('+h+', 100%, 60%, '+alpha*0.3+')' : 'hsla('+ho+', 100%, 60%, '+alpha*0.3+')';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(cx - tWidth/2, gridY - tHeight/2, tWidth, tHeight);
+ }
+
+ // 3. Éclat lumineux à l'horizon / Point de fuite
+ const radialG = ctx.createRadialGradient(cx, gridY, 5, cx, gridY, 180);
+ radialG.addColorStop(0, 'hsla('+h+', 100%, 80%, 0.45)');
+ radialG.addColorStop(0.5, 'hsla('+ho+', 100%, 60%, 0.15)');
+ radialG.addColorStop(1, 'transparent');
+ ctx.fillStyle = radialG;
+ ctx.fillRect(0, gridY - 120, W, 240);
+
+ if(pulse){
+  ctx.globalAlpha=.12*pulse;
+  ctx.fillStyle='hsl('+h+',100%,60%)';
+  ctx.fillRect(0,0,W,H);
+ }
+ ctx.globalAlpha=1;
+ ctx.globalCompositeOperation='source-over';
 }
+
 function drawFX(f,w){
  const h=w.h,ho=w.ho,n=lowQ?20:FXN;let i,p;
  ctx.globalAlpha=1;ctx.globalCompositeOperation='lighter';ctx.lineJoin='round';
