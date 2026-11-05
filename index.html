@@ -11,24 +11,24 @@
 <style>
 :root{--bg:#070914;--cyan:#5cf7ff;--pink:#ff4fd8;--gold:#ffd76a;--white:#f5f7ff}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
-body{margin:0;background:var(--bg);color:var(--white);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;height:100dvh;overflow:hidden;touch-action:none}
+body{margin:0;background:var(--bg);color:var(--white);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;height:100dvh;overflow:hidden}
 #sa{position:fixed;top:0;left:0;height:env(safe-area-inset-top,0px);width:1px;visibility:hidden}
 #gameContainer{position:relative;width:100%;max-width:420px;height:100%;max-height:940px;box-shadow:0 0 60px rgba(92,247,255,.2);overflow:hidden;background:#050712}
-canvas{display:block;width:100%;height:100%}
-.screen{position:absolute;inset:0;background:rgba(5,7,20,.94);backdrop-filter:blur(8px);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:10;padding:18px;overflow-y:auto}
+canvas{display:block;width:100%;height:100%;pointer-events:auto}
+.screen{position:absolute;inset:0;background:rgba(5,7,20,.95);backdrop-filter:blur(8px);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:100;padding:18px;overflow-y:auto;pointer-events:auto}
 .hidden{display:none!important}
 h1{font-size:clamp(32px,9vw,48px);font-weight:1000;letter-spacing:-0.03em;margin:0 0 4px;text-align:center;color:#fff}
 h1 span{background:linear-gradient(90deg,#5cf7ff,#ff4fd8,#ffd76a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 16px rgba(92,247,255,.4))}
 h2{font-size:1.5rem;font-weight:900;letter-spacing:1px;margin:0 0 10px;text-align:center;color:#fff}
 .sub{color:#9aa5c7;font-size:.75rem;margin-bottom:12px;text-align:center;letter-spacing:1px}
 .badge{background:#0c1229cc;border:1px solid rgba(92,247,255,.3);padding:8px 16px;border-radius:999px;font-size:.85rem;font-weight:800;color:var(--gold);margin-bottom:8px;text-align:center;box-shadow:0 0 15px rgba(92,247,255,.08)}
-.btn{background:#0b1028cc;border:1px solid rgba(92,247,255,.4);padding:13px 22px;font-size:.88rem;font-weight:800;border-radius:15px;color:var(--cyan);box-shadow:0 0 20px rgba(92,247,255,.15);cursor:pointer;margin:5px 0;width:88%;max-width:280px;text-align:center;font-family:inherit;letter-spacing:1px;touch-action:manipulation;z-index:20;position:relative}
+.btn{background:#0b1028cc;border:1px solid rgba(92,247,255,.4);padding:14px 22px;font-size:.88rem;font-weight:800;border-radius:15px;color:var(--cyan);box-shadow:0 0 20px rgba(92,247,255,.15);cursor:pointer;margin:6px 0;width:88%;max-width:280px;text-align:center;font-family:inherit;letter-spacing:1px;pointer-events:auto;z-index:101}
 .p{background:linear-gradient(100deg,#5cf7ff,#8e8aff 55%,#ff4fd8);color:#071020;border:none;box-shadow:0 8px 30px rgba(92,247,255,.25)}
 .g{border-color:var(--gold);color:var(--gold);box-shadow:0 0 15px rgba(255,215,106,.2)}
 .r{border-color:#ff4f4f;color:#ff7a7a;box-shadow:0 0 15px rgba(255,79,79,.2)}
 .k{border-color:var(--pink);color:var(--pink);box-shadow:0 0 15px rgba(255,79,216,.2)}
 .s{padding:8px 12px;font-size:.72rem;border-color:#4a5888;color:#b0c2ff;box-shadow:none;margin:3px;background:#101630}
-.row{display:flex;justify-content:center;width:100%;max-width:300px;gap:6px;z-index:20;position:relative}
+.row{display:flex;justify-content:center;width:100%;max-width:300px;gap:6px;z-index:101;position:relative}
 .btn:active{transform:scale(.95)}
 .btn:disabled{opacity:.35}
 .tabs{display:flex;gap:6px;margin-bottom:10px}
@@ -110,7 +110,7 @@ h2{font-size:1.5rem;font-weight:900;letter-spacing:1px;margin:0 0 10px;text-alig
     <h2>COMMENT JOUER</h2>
     <div class="mis">👆 Touche l'écran pour changer de côté.</div>
     <div class="mis">🟡 Ramasse l'or et évite les obstacles.</div>
-    <div class="mis">▲ Le jump rend invincible un instant · ⚡ le turbo double les pièces.</div>
+    <div class="mis">▲ Le JUMP rend invincible un instant · ⚡ le turbo double les pièces.</div>
     <div class="mis">🏆 Bats ton record, débloque trophées, boules, traînées et fonds.</div>
     <button class="btn p" id="tutoBtn" style="margin-top:10px">COMPRIS !</button>
   </div>
@@ -312,7 +312,7 @@ function prims(o){
  if(t===13){const an=o.a+sec*1.4,l=42,r=[];[[-108,1],[108,-1]].forEach(q=>{const c=o.c+q[0],aa=an*q[1];r.push({k:'s',x1:c-Math.cos(aa)*l,y1:cy-Math.sin(aa)*l,x2:c+Math.cos(aa)*l,y2:cy+Math.sin(aa)*l,w:8})});return r}
  if(t===14){const an=o.a+sec*o.s,l=44,r=[];for(let i=0;i<2;i++){const aa=an+i*1.5708;r.push({k:'s',x1:o.c-Math.cos(aa)*l,y1:cy-Math.sin(aa)*l,x2:o.c+Math.cos(aa)*l,y2:cy+Math.sin(aa)*l,w:7})}return r}
  if(t===15){const r=[],cw=(R-L)/6;for(let i=0;i<6;i++){if(Math.abs(i-o.pc)<=1)continue;if(hsh(o.seed+i*5.1)<.65)r.push({k:'r',x:L+i*cw+2,y:o.y,w:cw-4,h:o.h})}return r}
- if(t===16){const aa=Math.sin(sec*1.2+o.a)*1.2,l=54;return[{k:'s',x1:o.c-Math.cos(an)*l,y1:cy-Math.sin(aa)*l,x2:o.c+Math.cos(aa)*l,y2:cy+Math.sin(aa)*l,w:8}]}
+ if(t===16){const aa=Math.sin(sec*1.2+o.a)*1.2,l=54;return[{k:'s',x1:o.c-Math.cos(an)*l,y1:cy-Math.sin(aa)*l,x2:o.c+Math.cos(aan)*l,y2:cy+Math.sin(aa)*l,w:8}]}
  if(t===17)return bar(o.c,o.gw,o).concat(bar(o.c+o.d,o.gw,{y:o.y-58,h:o.h}),bar(o.c+2*o.d,o.gw,{y:o.y-116,h:o.h}));
  if(t===18){const r=[];[[-115,1],[115,-1]].forEach(q=>{const an=sec*2*q[1]+o.a;r.push({k:'c',x:o.c+q[0]+Math.cos(an)*34,y:cy+Math.sin(an)*34,r:10})});return r}
  if(t===19){const rr=18+18*(.5+.5*Math.sin(T/30*Math.PI+o.a));return[{k:'o',x:o.c-125,y:cy,r:rr,w:7},{k:'o',x:o.c+125,y:cy,r:rr,w:7}]}
@@ -356,7 +356,7 @@ function finish(kind){
   $('goL4').innerText=msg;$('goL4').classList.toggle('hidden',!msg);
   const can=kind==='dead'&&gameMode!==2&&reviveCount<MAXREV;
   $('rvCoin').classList.toggle('hidden',!can||reviveCount>0);$('rvAd').classList.toggle('hidden',!can);
-  $('rvCoin').innerText='REVIVRE · 25 ●';$('rvCoin'].disabled=coins<25;$('rvAd').innerText=reviveCount>0?'REVIVRE (PUB OBLIGATOIRE)':'REVIVRE (PUB)';
+  $('rvCoin').innerText='REVIVRE · 25 ●';$('rvCoin').disabled=coins<25;$('rvAd').innerText=reviveCount>0?'REVIVRE (PUB OBLIGATOIRE)':'REVIVRE (PUB)';
   showOnly('gameOverScreen');state='GAMEOVER';
  },win?900:650);
 }
@@ -380,13 +380,12 @@ function handleMenuAction(modeVal) {
   startGame(modeVal);
 }
 
+// ATTACHEMENT UNIVERSEL DES ÉVÉNEMENTS TACTILES ET CLICS SUR TOUS LES BOUTONS DU MENU
 document.querySelectorAll('[data-mode]').forEach(b=>{
- b.addEventListener('click',e=>{e.stopPropagation();handleMenuAction(+b.getAttribute('data-mode'))});
- b.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();handleMenuAction(+b.getAttribute('data-mode'))});
+ b.addEventListener('pointerdown',e=>{e.stopPropagation();handleMenuAction(+b.getAttribute('data-mode'))});
 });
 document.querySelectorAll('[data-back]').forEach(b=>{
- b.addEventListener('click',e=>{e.stopPropagation();updateBadges();showOnly('menuScreen')});
- b.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();updateBadges();showOnly('menuScreen')});
+ b.addEventListener('pointerdown',e=>{e.stopPropagation();updateBadges();showOnly('menuScreen')});
 });
 
 let shopTab='t';
@@ -400,9 +399,12 @@ let rst=0;on('tRst',()=>{if(!rst){rst=1;$('tRst').innerText='CONFIRMER ? (TOUT S
 on('tutoBtn',()=>{sv('upward_tuto',1);showOnly(null);state='READY'});
 on('rvAd',watchAd);on('adClose',revive);on('shareBtn',share);
 on('rvCoin',()=>{if(reviveCount===0&&coins>=25){coins-=25;sv('upward_coins',coins);revive()}});
+
+function on(id,fn){const el=$(id);if(el)el.addEventListener('pointerdown',function(e){e.stopPropagation();vib(15);fn()})}
+
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pause()});
 addEventListener('pointerdown',function(e){
- if(e.target.closest('.screen'))return;
+ if(e.target.closest('.screen') || e.target.closest('button'))return;
  if(state==='READY'){state='PLAYING';beep(500,.06);vib(20);return}
  if(state!=='PLAYING')return;
  const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
