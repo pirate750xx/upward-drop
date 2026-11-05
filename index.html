@@ -143,9 +143,9 @@ const MODES=['INFINI','SPEEDRUN','HARDCORE','GOLD RUSH'];
 
 const WORLDS=[
  [ 
-  {name:'CYAN NÉON',bg1:'#03071e',bg2:'#0d1b2a',wall:'#00f3ff',obs:'#ff00aa',style:'grid'},
-  {name:'PURPLE VORTEX',bg1:'#0d0221',bg2:'#240046',wall:'#e0aaff',obs:'#7b2cbf',style:'vortex'},
-  {name:'CYBERPUNK',bg1:'#031926',bg2:'#15616d',wall:'#00f5d4',obs:'#f72585',style:'grid'}
+  {name:'CYAN NÉON',bg1:'#03071e',bg2:'#0d1b2a',wall:'#00f3ff',obs:'#ff00aa',style:'stars'},
+  {name:'PURPLE VORTEX',bg1:'#0d0221',bg2:'#240046',wall:'#e0aaff',obs:'#7b2cbf',style:'stars'},
+  {name:'CYBERPUNK',bg1:'#031926',bg2:'#15616d',wall:'#00f5d4',obs:'#f72585',style:'stars'}
  ],
  [ 
   {name:'SPRINT LASER',bg1:'#020d1c',bg2:'#04244d',wall:'#00f3ff',obs:'#ff00ff',style:'speed'},
@@ -179,6 +179,12 @@ const ACH=[{t:'Score 500',f:()=>best[0]>=500},{t:'Score 2000',f:()=>best[0]>=200
 let state='MENU',gameMode=0,endKind='',score=0,T=0,runTime=0,goldT=0,runCoins=0,streak=0,popT=0,popTxt='';
 let cameraY=0,nextY=0,shake=0,bannerT=0,reviveCount=0,inv=0,pathX=0,sinceHeavy=9,lastT=-1,startBest=0,recBeaten=false,recT=0,boostT=0;
 let failStreak=0,assist=false,worldIdx=0,currentWorld=null,ftAvg=16,ftN=0;
+
+// ÉTOILES ET PARTICULES LUMINEUSES PROPRES EN FOND
+let bgStars=[],bgSparks=[];
+for(let i=0;i<40;i++) bgStars.push({x:Math.random()*420,y:Math.random()*850,size:Math.random()*2+1,speed:Math.random()*0.6+0.2,bright:Math.random()});
+for(let i=0;i<25;i++) bgSparks.push({x:Math.random()*420,y:Math.random()*850,vy:-(Math.random()*2+1),vx:(Math.random()-.5)*1,s:Math.random()*2.5+1});
+
 const sh=v=>lowQ?0:v;
 const dm=()=>[.65,1,1.3][set.dl]*(assist?.8:1);
 const diff=()=>gameMode===1?Math.min(1.4,score/5000):gameMode===2?Math.min(1.6,score/4000):gameMode===3?Math.min(.5,score/10000):Math.min(1.1,score*dm()/10000);
@@ -351,7 +357,7 @@ function finish(kind){
   $('goL4').innerText=msg;$('goL4').classList.toggle('hidden',!msg);
   const can=kind==='dead'&&gameMode!==2&&reviveCount<MAXREV;
   $('rvCoin').classList.toggle('hidden',!can||reviveCount>0);$('rvAd').classList.toggle('hidden',!can);
-  $('rvCoin').innerText='REVIVRE · 25 ●';$('rvCoin').disabled=coins<25;$('rvAd').innerText=reviveCount>0?'REVIVRE (PUB OBLIGATOIRE)':'REVIVRE (PUB)';
+  $('rvCoin').innerText='REVIVRE · 25 ●';$('rvCoin'].disabled=coins<25;$('rvAd').innerText=reviveCount>0?'REVIVRE (PUB OBLIGATOIRE)':'REVIVRE (PUB)';
   showOnly('gameOverScreen');state='GAMEOVER';
  },win?900:650);
 }
@@ -371,7 +377,6 @@ function share(){
 }
 function on(id,fn){const el=$(id);if(el)el.addEventListener('click',function(e){e.stopPropagation();vib(15);fn()})}
 
-// CORRECTION DIRECTE DES CLICS SUR LES BOUTONS DE MODE ET MENU
 document.querySelectorAll('[data-mode]').forEach(b=>{
  b.addEventListener('click',e=>{e.stopPropagation();vib(15);startGame(+b.getAttribute('data-mode'))});
  b.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();vib(15);startGame(+b.getAttribute('data-mode'))});
@@ -411,6 +416,11 @@ function music(){
 function getP(o){if(o._T!==T){o._p=prims(o);o._T=T}return o._p}
 function step(){
  T++;shake*=.9;inv=Math.max(0,inv-1);bannerT=Math.max(0,bannerT-1);recT=Math.max(0,recT-1);popT=Math.max(0,popT-1);
+
+ // ANIMATION DES ÉTOILES ET PARTICULES DE FOND
+ bgStars.forEach(s=>{s.y+=s.speed*(gameMode===1?4:1);if(s.y>H){s.y=0;s.x=Math.random()*W}});
+ bgSparks.forEach(p=>{p.y+=p.vy;p.x+=p.vx;if(p.y<0){p.y=H;p.x=Math.random()*W}});
+
  items.forEach(it=>{
   it.spin+=.05;
   it.life--;
@@ -493,29 +503,31 @@ function draw(){
  const mc=currentWorld.wall||'#5cf7ff';
  const oc=currentWorld.obs||'#ff4fd8';
  
+ // FOND DÉGRADÉ FLUIDE MAGNIFIQUE (SANS AUCUN QUADRILLAGE)
  const bgGrad=ctx.createRadialGradient(W*.5,H*.3,10,W*.5,H*.5,W*1.2);
  bgGrad.addColorStop(0,currentWorld.bg2);
  bgGrad.addColorStop(1,currentWorld.bg1);
  ctx.fillStyle=bgGrad;ctx.fillRect(0,0,W,H);
 
- const st=currentWorld.style;
- if(st==='grid'||st==='vortex'){
-  ctx.strokeStyle=mc;ctx.globalAlpha=0.04;ctx.lineWidth=1;
-  const off=(cameraY*.3)%60;
-  for(let y=-off;y<H;y+=60){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
-  for(let x=0;x<W;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
-  ctx.globalAlpha=1;
- }else if(st==='speed'){
-  ctx.strokeStyle=mc;ctx.globalAlpha=0.08;ctx.lineWidth=1.5;
-  const off=(T*6)%80;
-  for(let x=40;x<W;x+=80){ctx.beginPath();ctx.moveTo(x,-off);ctx.lineTo(x,H+off);ctx.stroke()}
-  ctx.globalAlpha=1;
- }
+ // AFFICHAGE DES ÉTOILES ET PARTICULES LUMINEUSES PROPRES EN FOND
+ bgStars.forEach(s=>{
+  const alpha = 0.3 + 0.4 * Math.sin(T * 0.05 + s.bright * 10);
+  ctx.fillStyle = mc;
+  ctx.globalAlpha = Math.max(0.1, alpha);
+  ctx.fillRect(s.x, s.y, s.size, s.size);
+ });
+ bgSparks.forEach(p=>{
+  ctx.fillStyle = oc;
+  ctx.globalAlpha = 0.25;
+  ctx.fillRect(p.x, p.y, p.s, p.s);
+ });
+ ctx.globalAlpha = 1;
 
  ctx.save();
  if(shake>.3)ctx.translate((Math.random()-.5)*shake*2,(Math.random()-.5)*shake*2);
  ctx.translate(0,-cameraY);
  
+ // MURS LATÉRAUX LUMINEUX
  ctx.strokeStyle=mc;ctx.lineWidth=4;ctx.shadowBlur=sh(22);ctx.shadowColor=mc;
  ctx.beginPath();ctx.moveTo(WM,cameraY-40);ctx.lineTo(WM,cameraY+H+40);ctx.moveTo(W-WM,cameraY-40);ctx.lineTo(W-WM,cameraY+H+40);ctx.stroke();
  
