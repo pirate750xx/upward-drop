@@ -110,7 +110,7 @@ h2{font-size:1.5rem;font-weight:900;letter-spacing:1px;margin:0 0 10px;text-alig
     <h2>COMMENT JOUER</h2>
     <div class="mis">👆 Touche l'écran pour changer de côté.</div>
     <div class="mis">🟡 Ramasse l'or et évite les obstacles.</div>
-    <div class="mis">▲ Le saut rend invincible un instant · ⚡ le turbo double les pièces.</div>
+    <div class="mis">▲ Le jump rend invincible un instant · ⚡ le turbo double les pièces.</div>
     <div class="mis">🏆 Bats ton record, débloque trophées, boules, traînées et fonds.</div>
     <button class="btn p" id="tutoBtn" style="margin-top:10px">COMPRIS !</button>
   </div>
@@ -177,10 +177,9 @@ const ACH=[{t:'Score 500',f:()=>best[0]>=500},{t:'Score 2000',f:()=>best[0]>=200
  {t:'100 pièces',f:()=>stats.coins>=100},{t:'1000 pièces',f:()=>stats.coins>=1000},{t:'20 parties',f:()=>stats.runs>=20},{t:'1re traînée',f:()=>trailsOwn.length>1}];
 
 let state='MENU',gameMode=0,endKind='',score=0,T=0,runTime=0,goldT=0,runCoins=0,streak=0,popT=0,popTxt='';
-let cameraY=0,nextY=0,shake=0,bannerT=0,reviveCount=0,inv=0,pathX=0,sinceHeavy=9,lastT=-1,startBest=0,recBeaten=false,recT=0,boostT=0;
+let cameraY=0,nextY=0,shake=0,bannerT=0,reviveCount=0,inv=0,pathX=0,sinceHeavy=9,lastT=-1,startBest=0,recBeaten=false,recT=0,boostT=0,jumpBoost=0;
 let failStreak=0,assist=false,worldIdx=0,currentWorld=null,ftAvg=16,ftN=0;
 
-// ÉTOILES ET PARTICULES LUMINEUSES PROPRES EN FOND
 let bgStars=[],bgSparks=[];
 for(let i=0;i<40;i++) bgStars.push({x:Math.random()*420,y:Math.random()*850,size:Math.random()*2+1,speed:Math.random()*0.6+0.2,bright:Math.random()});
 for(let i=0;i<25;i++) bgSparks.push({x:Math.random()*420,y:Math.random()*850,vy:-(Math.random()*2+1),vx:(Math.random()-.5)*1,s:Math.random()*2.5+1});
@@ -239,7 +238,7 @@ function burst(x,y,c,n,s){for(let i=0;i<n;i++){const a=Math.random()*6.283,v=Mat
 
 function startGame(m){
  gameMode=m;assist=failStreak>=3&&m===0;
- score=0;T=0;runTime=0;runCoins=0;streak=0;shake=0;reviveCount=0;inv=0;bannerT=0;recT=0;popT=0;boostT=0;recBeaten=false;
+ score=0;T=0;runTime=0;runCoins=0;streak=0;shake=0;reviveCount=0;inv=0;bannerT=0;recT=0;popT=0;boostT=0;jumpBoost=0;recBeaten=false;
  startBest=(m===0||m===2)?best[m]:0;goldT=3600;
  ball.x=W/2;ball.y=H-120;ball.vx=1.3;ball.vy=-2;ball.trail=[];
  obstacles=[];items=[];ups=[];parts=[];worldIdx=0;
@@ -375,11 +374,15 @@ function share(){
  if(navigator.share)navigator.share({text:txt,url:location.href}).catch(()=>{});
  else if(navigator.clipboard)navigator.clipboard.writeText(txt+' '+location.href).then(()=>{$('shareBtn').innerText='COPIÉ !'}).catch(()=>{});
 }
-function on(id,fn){const el=$(id);if(el)el.addEventListener('click',function(e){e.stopPropagation();vib(15);fn()})}
+
+function handleMenuAction(modeVal) {
+  vib(15);
+  startGame(modeVal);
+}
 
 document.querySelectorAll('[data-mode]').forEach(b=>{
- b.addEventListener('click',e=>{e.stopPropagation();vib(15);startGame(+b.getAttribute('data-mode'))});
- b.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();vib(15);startGame(+b.getAttribute('data-mode'))});
+ b.addEventListener('click',e=>{e.stopPropagation();handleMenuAction(+b.getAttribute('data-mode'))});
+ b.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();handleMenuAction(+b.getAttribute('data-mode'))});
 });
 document.querySelectorAll('[data-back]').forEach(b=>{
  b.addEventListener('click',e=>{e.stopPropagation();updateBadges();showOnly('menuScreen')});
@@ -416,17 +419,18 @@ function music(){
 function getP(o){if(o._T!==T){o._p=prims(o);o._T=T}return o._p}
 function step(){
  T++;shake*=.9;inv=Math.max(0,inv-1);bannerT=Math.max(0,bannerT-1);recT=Math.max(0,recT-1);popT=Math.max(0,popT-1);
+ if(jumpBoost>0) jumpBoost--;
 
- // ANIMATION DES ÉTOILES ET PARTICULES DE FOND
  bgStars.forEach(s=>{s.y+=s.speed*(gameMode===1?4:1);if(s.y>H){s.y=0;s.x=Math.random()*W}});
  bgSparks.forEach(p=>{p.y+=p.vy;p.x+=p.vx;if(p.y<0){p.y=H;p.x=Math.random()*W}});
 
  items.forEach(it=>{
   it.spin+=.05;
   it.life--;
-  if(Math.hypot(ball.x-it.x, ball.y-it.y) < 90) {
-   it.x += (ball.x - it.x) * 0.08;
-   it.y += (ball.y - it.y) * 0.08;
+  // AIMANT ACTIF UNIQUEMENT EN MODE 3 (GOLD RUSH)
+  if(gameMode===3 && Math.hypot(ball.x-it.x, ball.y-it.y) < 110) {
+   it.x += (ball.x - it.x) * 0.12;
+   it.y += (ball.y - it.y) * 0.12;
   }
  });
  items=items.filter(it=>it.life>0);
@@ -437,7 +441,10 @@ function step(){
  
  let modeSpeedMultiplier = gameMode===1 ? 1.45 : gameMode===2 ? 1.55 : 1;
  const bs=modeSpeedMultiplier * (boostT>0?1.5:1)*(1+.35*Math.min(1,diff())),dir=Math.sign(ball.vx)||1;
- ball.vx=dir*1.3*bs;ball.vy=-2*bs;ball.x+=ball.vx;ball.y+=ball.vy;
+ ball.vx=dir*1.3*bs;
+ let verticalSpeed = -2 * bs - (jumpBoost > 0 ? 3.5 : 0);
+ ball.vy = verticalSpeed;
+ ball.x+=ball.vx;ball.y+=ball.vy;
  ball.trail.push({x:ball.x,y:ball.y});if(ball.trail.length>16)ball.trail.shift();
  const hs=Math.floor(-ball.y/6);if(hs>score)score=hs;
  if(gameMode===1&&score>=3000){finish('win');return}
@@ -472,7 +479,7 @@ function step(){
  ups.forEach(u=>{
   if(!u.hit&&Math.abs(ball.x-u.x)<u.w/2+8&&Math.abs(ball.y-u.y)<18){
    u.hit=true;
-   if(u.k==='j'){ball.y-=120;inv=Math.max(inv,75);beep(1500,.25,'triangle',.1);burst(u.x,u.y,'#ffd700',26,6);vib([30,30,30])}
+   if(u.k==='j'){jumpBoost=45;inv=Math.max(inv,45);beep(1500,.25,'triangle',.1);burst(u.x,u.y,'#ffd700',26,6);vib([30,30,30])}
    else{boostT=90;beep(1200,.18,'triangle',.08);burst(u.x,u.y,'#00ffff',22,5);vib(30)}
   }
  });
@@ -503,13 +510,11 @@ function draw(){
  const mc=currentWorld.wall||'#5cf7ff';
  const oc=currentWorld.obs||'#ff4fd8';
  
- // FOND DÉGRADÉ FLUIDE MAGNIFIQUE (SANS AUCUN QUADRILLAGE)
  const bgGrad=ctx.createRadialGradient(W*.5,H*.3,10,W*.5,H*.5,W*1.2);
  bgGrad.addColorStop(0,currentWorld.bg2);
  bgGrad.addColorStop(1,currentWorld.bg1);
  ctx.fillStyle=bgGrad;ctx.fillRect(0,0,W,H);
 
- // AFFICHAGE DES ÉTOILES ET PARTICULES LUMINEUSES PROPRES EN FOND
  bgStars.forEach(s=>{
   const alpha = 0.3 + 0.4 * Math.sin(T * 0.05 + s.bright * 10);
   ctx.fillStyle = mc;
@@ -527,7 +532,6 @@ function draw(){
  if(shake>.3)ctx.translate((Math.random()-.5)*shake*2,(Math.random()-.5)*shake*2);
  ctx.translate(0,-cameraY);
  
- // MURS LATÉRAUX LUMINEUX
  ctx.strokeStyle=mc;ctx.lineWidth=4;ctx.shadowBlur=sh(22);ctx.shadowColor=mc;
  ctx.beginPath();ctx.moveTo(WM,cameraY-40);ctx.lineTo(WM,cameraY+H+40);ctx.moveTo(W-WM,cameraY-40);ctx.lineTo(W-WM,cameraY+H+40);ctx.stroke();
  
@@ -561,7 +565,7 @@ function draw(){
   ctx.save();ctx.shadowColor=c;ctx.shadowBlur=sh(22);ctx.fillStyle=c;
   roundedRect(ctx,u.x-u.w/2,u.y-u.h/2,u.w,u.h,8);ctx.fill();
   ctx.fillStyle='#000';ctx.font='900 10px system-ui,sans-serif';ctx.textAlign='center';
-  ctx.fillText(u.k==='j'?'▲ SAUT ▲':'⚡ TURBO ⚡',u.x,u.y+3.5);
+  ctx.fillText(u.k==='j'?'▲ JUMP ▲':'⚡ TURBO ⚡',u.x,u.y+3.5);
   ctx.restore();
  });
 
