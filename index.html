@@ -12,18 +12,18 @@
 <style>
 :root{--bg:#070914;--cyan:#5cf7ff;--pink:#ff4fd8;--gold:#ffd76a;--white:#f5f7ff}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
-body{margin:0;background:var(--bg);color:var(--white);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;height:100dvh;overflow:hidden}
+body{margin:0;background:var(--bg);color:var(--white);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;height:100dvh;overflow:hidden;touch-action:none}
 #sa{position:fixed;top:0;left:0;height:env(safe-area-inset-top,0px);width:1px;visibility:hidden}
-#gameContainer{position:relative;width:100%;max-width:420px;height:100%;max-height:940px;box-shadow:0 0 60px rgba(92,247,255,.2);overflow:hidden;background:#050712}
-canvas{display:block;width:100%;height:100%;pointer-events:none}
-.screen{position:absolute;inset:0;background:rgba(5,7,20,.97);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:100;padding:18px;overflow-y:auto;pointer-events:auto}
+#gameContainer{position:relative;width:100%;max-width:420px;height:100%;max-height:940px;box-shadow:0 0 60px rgba(92,247,255,.2);overflow:hidden;background:#050712;touch-action:none}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+.screen{position:absolute;inset:0;background:rgba(5,7,20,.97);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:100;padding:18px;overflow-y:auto}
 .hidden{display:none!important}
 h1{font-size:clamp(32px,9vw,48px);font-weight:900;letter-spacing:-0.02em;margin:0 0 4px;text-align:center;color:#fff}
 h1 span{background:linear-gradient(90deg,#5cf7ff,#ff4fd8,#ffd76a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 16px rgba(92,247,255,.4))}
 h2{font-size:1.5rem;font-weight:900;letter-spacing:1px;margin:0 0 10px;text-align:center;color:#fff}
 .sub{color:#9aa5c7;font-size:.75rem;margin-bottom:12px;text-align:center;letter-spacing:1px}
 .badge{background:#0c1229cc;border:1px solid rgba(92,247,255,.3);padding:8px 16px;border-radius:999px;font-size:.85rem;font-weight:800;color:var(--gold);margin-bottom:8px;text-align:center}
-.btn{background:#0b1028cc;border:1px solid rgba(92,247,255,.4);padding:14px 22px;font-size:.88rem;font-weight:800;border-radius:15px;color:var(--cyan);box-shadow:0 0 20px rgba(92,247,255,.15);cursor:pointer;margin:6px 0;width:88%;max-width:280px;text-align:center;font-family:inherit;letter-spacing:1px;touch-action:manipulation;position:relative;z-index:102}
+.btn{background:#0b1028cc;border:1px solid rgba(92,247,255,.4);padding:14px 22px;font-size:.88rem;font-weight:800;border-radius:15px;color:var(--cyan);box-shadow:0 0 20px rgba(92,247,255,.15);cursor:pointer;margin:6px 0;width:88%;max-width:280px;text-align:center;font-family:inherit;letter-spacing:1px;touch-action:manipulation}
 .p{background:linear-gradient(100deg,#5cf7ff,#8e8aff 55%,#ff4fd8);color:#071020;border:none;box-shadow:0 8px 30px rgba(92,247,255,.25)}
 .g{border-color:var(--gold);color:var(--gold);box-shadow:0 0 15px rgba(255,215,106,.2)}
 .r{border-color:#ff4f4f;color:#ff7a7a;box-shadow:0 0 15px rgba(255,79,79,.2)}
@@ -142,6 +142,7 @@ dailyInit();
 const MISS=[{t:'Atteins 1500 pts en Infini',g:1500},{t:'Ramasse 40 pièces',g:40},{t:'Joue 3 parties',g:3}];
 const MODES=['INFINI','SPEEDRUN','HARDCORE','GOLD RUSH'];
 
+/* 47 mondes, chaque catégorie a ses propres thèmes : [nom, teinte murs, teinte obstacles, effet de fond, pulse] */
 const CAT=[
  {len:700,L:[5,13],w:[['CYAN NÉON',185,320,'stars'],['AURORE BORÉALE',150,290,'aurora'],['VORTEX VIOLET',275,55,'vortex'],['OCÉAN PROFOND',205,20,'bubbles'],['FORÊT LUMINEUSE',120,320,'fireflies'],['SAKURA NÉON',330,175,'petals'],['GLACIER',195,335,'snow'],['ÉLECTRO DISCO',300,150,'stars',1],['CRISTAL HEX',170,300,'hex'],['NÉBULEUSE',260,40,'stars'],['LAGON TURQUOISE',175,345,'bubbles'],['CRÉPUSCULE',20,220,'aurora'],['PLASMA',310,120,'vortex'],['COSMOS ENDORMI',230,60,'stars'],['NÉON PARADISE',340,190,'aurora',1]]},
  {len:300,L:[5,12],w:[['CYBER SPRINT',190,320,'speed'],['TUNNEL LASER',300,90,'speed'],['HYPERSPACE',225,45,'speed'],['MATRIX CODE',140,320,'rain'],['TURBO GRID',170,335,'grid'],['ONDE SONAR',200,30,'rings'],['DATA STREAM',160,280,'rain'],['PULSE DRIVE',280,130,'rings',1],['FIBRE OPTIQUE',210,340,'speed'],['LIGNE D\'ARRIVÉE',120,320,'grid']]},
@@ -168,8 +169,8 @@ let cameraY=0,nextY=0,shake=0,bannerT=0,reviveCount=0,inv=0,pathX=0,sinceHeavy=9
 let failStreak=0,assist=false,worldIdx=0,currentWorld=WORLDS[0][0],ftAvg=16,ftN=0;
 const sh=v=>lowQ?0:v;
 const dm=()=>[.65,1,1.3][set.dl]*(assist?.8:1);
-const diff=()=>gameMode===1?Math.min(1.5,score/4500):gameMode===2?Math.min(2.0,score/2500):gameMode===3?Math.min(.3,score/10000):Math.min(1.1,score*dm()/10000);
-const spc=()=>Math.max(220-45*Math.min(1,diff()),gameMode===2?165:gameMode===1?175:215);
+const diff=()=>gameMode===1?Math.min(1,score/6000):gameMode===2?Math.min(1.2,score/4500):gameMode===3?Math.min(.3,score/10000):Math.min(1.1,score*dm()/10000);
+const spc=()=>Math.max(270-55*Math.min(1,diff()),gameMode===2?205:215);
 const lvl=()=>Math.floor(score/100)+1;
 const ball={x:0,y:0,r:10,vx:1.3,vy:-2,trail:[]};
 let obstacles=[],items=[],ups=[],parts=[];
@@ -180,11 +181,7 @@ function updateBadges(){
  $('bBest').innerText='RECORD · '+MODES[0]+' : '+best[0]+(best[1]?'  ·  SPEEDRUN : '+(best[1]/60).toFixed(1)+'s':'');
  $('bCoins').innerText='PIÈCES : '+coins;
 }
-function showOnly(id){
- ['menuScreen','settingsScreen','shopScreen','defisScreen','pauseScreen','gameOverScreen','adScreen','tutoScreen'].forEach(s=>$(s).classList.toggle('hidden',s!==id));
- // Active ou désactive les clics sur le canvas selon qu'on est en jeu ou dans les menus
- canvas.style.pointerEvents = (id === null) ? 'auto' : 'none';
-}
+function showOnly(id){['menuScreen','settingsScreen','shopScreen','defisScreen','pauseScreen','gameOverScreen','adScreen','tutoScreen'].forEach(s=>$(s).classList.toggle('hidden',s!==id))}
 function refreshSet(){
  $('tSnd').innerText='SON : '+(set.snd?'ON':'OFF');$('tVib').innerText='VIBRATIONS : '+(set.vib?'ON':'OFF');
  $('tFx').innerText='EFFETS : '+(set.fx?'COMPLETS':'RÉDUITS');$('tDl').innerText='DIFFICULTÉ : '+['FACILE','NORMAL','EXPERT'][set.dl];
@@ -287,22 +284,22 @@ function prims(o){
   const a=u>=1-cf?true:(u>=1-cf-.07?'warn':false),b=u<cf?true:(u>=.93?'warn':false);
   return[{k:'r',x:L,y:o.y,w:c1-g/2-L,h:o.h},{k:'r',x:c1+g/2,y:o.y,w:c2-c1-g,h:o.h},{k:'r',x:c2+g/2,y:o.y,w:R-c2-g/2,h:o.h},{k:'r',x:c1-g/2,y:o.y,w:g,h:o.h,on:a},{k:'r',x:c2-g/2,y:o.y,w:g,h:o.h,on:b}]}
  if(t===6){const r=[];for(let i=0;i<3;i++){const an=sec*1.8*o.s+i*2.094;r.push({k:'c',x:o.c+Math.cos(an)*52,y:cy+Math.sin(an)*52,r:9})}return r}
- if(t===8){const r[],cw=(R-L)/6;for(let i=0;i<6;i++){if(Math.abs(i-o.pc)<=1)continue;
+ if(t===8){const r=[],cw=(R-L)/6;for(let i=0;i<6;i++){if(Math.abs(i-o.pc)<=1)continue;
    const now=hsh(o.seed+i*7.3+beat*3.1)<.5,nxt=hsh(o.seed+i*7.3+(beat+1)*3.1)<.5;
    r.push({k:'r',x:L+i*cw+2,y:o.y,w:cw-4,h:o.h,on:now?true:(nxt&&bp>=22?'warn':false)})}return r}
  if(t===9){const an=Math.sin(sec*1.3+o.a),px=o.c+Math.sin(an)*82,py=o.y-20+Math.cos(an)*82;return[{k:'s',x1:o.c,y1:o.y-20,x2:px,y2:py,w:3},{k:'c',x:px,y:py,r:11}]}
  if(t===10)return[{k:'o',x:o.c,y:cy,r:24+26*(.5+.5*Math.sin(T/30*Math.PI+o.a)),w:8}];
  if(t===11)return bar(o.c,o.gw,o).concat(bar(o.c2,o.gw,{y:o.y-70,h:o.h}));
- if(t===12){const r[],k=beat%4;[[-75,0],[75,0],[-150,1],[150,1]].forEach(q=>{const x=o.c+q[0];if(x<L+8||x>R-8)return;
+ if(t===12){const r=[],k=beat%4;[[-75,0],[75,0],[-150,1],[150,1]].forEach(q=>{const x=o.c+q[0];if(x<L+8||x>R-8)return;
    const on=q[1]===0?k<2:k>=2,n2=(k+1)%4,nx=q[1]===0?n2<2:n2>=2;r.push({k:'r',x:x-3,y:o.y-45,w:6,h:90,on:on?true:(nx&&bp>=22?'warn':false)})});return r}
  if(t===13){const an=o.a+sec*1.4,l=42,r=[];[[-108,1],[108,-1]].forEach(q=>{const c=o.c+q[0],aa=an*q[1];r.push({k:'s',x1:c-Math.cos(aa)*l,y1:cy-Math.sin(aa)*l,x2:c+Math.cos(aa)*l,y2:cy+Math.sin(aa)*l,w:8})});return r}
  if(t===14){const an=o.a+sec*o.s,l=44,r=[];for(let i=0;i<2;i++){const aa=an+i*1.5708;r.push({k:'s',x1:o.c-Math.cos(aa)*l,y1:cy-Math.sin(aa)*l,x2:o.c+Math.cos(aa)*l,y2:cy+Math.sin(aa)*l,w:7})}return r}
- if(t===15){const r[],cw=(R-L)/6;for(let i=0;i<6;i++){if(Math.abs(i-o.pc)<=1)continue;if(hsh(o.seed+i*5.1)<.65)r.push({k:'r',x:L+i*cw+2,y:o.y,w:cw-4,h:o.h})}return r}
+ if(t===15){const r=[],cw=(R-L)/6;for(let i=0;i<6;i++){if(Math.abs(i-o.pc)<=1)continue;if(hsh(o.seed+i*5.1)<.65)r.push({k:'r',x:L+i*cw+2,y:o.y,w:cw-4,h:o.h})}return r}
  if(t===16){const aa=Math.sin(sec*1.2+o.a)*1.2,l=54;return[{k:'s',x1:o.c-Math.cos(aa)*l,y1:cy-Math.sin(aa)*l,x2:o.c+Math.cos(aa)*l,y2:cy+Math.sin(aa)*l,w:8}]}
  if(t===17)return bar(o.c,o.gw,o).concat(bar(o.c+o.d,o.gw,{y:o.y-58,h:o.h}),bar(o.c+2*o.d,o.gw,{y:o.y-116,h:o.h}));
  if(t===18){const r=[];[[-115,1],[115,-1]].forEach(q=>{const an=sec*2*q[1]+o.a;r.push({k:'c',x:o.c+q[0]+Math.cos(an)*34,y:cy+Math.sin(an)*34,r:10})});return r}
  if(t===19){const rr=18+18*(.5+.5*Math.sin(T/30*Math.PI+o.a));return[{k:'o',x:o.c-125,y:cy,r:rr,w:7},{k:'o',x:o.c+125,y:cy,r:rr,w:7}]}
- if(t===20){const r[],cw=(R-L)/6;for(let i=0;i<6;i++){if(Math.abs(i-o.pc)<=1)continue;r.push({k:'c',x:L+cw*(i+.5),y:cy+Math.sin(sec*2.2+i*1.1)*16,r:9})}return r}
+ if(t===20){const r=[],cw=(R-L)/6;for(let i=0;i<6;i++){if(Math.abs(i-o.pc)<=1)continue;r.push({k:'c',x:L+cw*(i+.5),y:cy+Math.sin(sec*2.2+i*1.1)*16,r:9})}return r}
  if(t===21){const an=o.a+sec*.9*o.s,l=46,r=[];for(let i=0;i<3;i++){const aa=an+i*2.094;r.push({k:'s',x1:o.c,y1:cy,x2:o.c+Math.cos(aa)*l,y2:cy+Math.sin(aa)*l,w:7})}return r}
  if(t===22){const g=o.gw,r=bar(o.c,g,o);[-1,1].forEach((sg,i)=>{r.push({k:'c',x:o.c+sg*(g/2-12-14*(.5+.5*Math.sin(sec*1.6+i*3))),y:cy,r:9})});return r}
  return bar(o.c,90+70*(.5+.5*Math.sin(sec*.9+o.a)),o);
@@ -446,8 +443,7 @@ function step(){
  runTime++;if(boostT>0)boostT--;
  if(currentWorld.pulse&&T%30===0)beep(80,.06,'square',.03);
  music();
- let modeSpeedMultiplier = gameMode===1 ? 1.55 : gameMode===2 ? 1.75 : 1;
- const bs=modeSpeedMultiplier * [1,1.3,1.35,1][gameMode]*(boostT>0?1.5:1)*(1+.35*Math.min(1,diff())),dir=Math.sign(ball.vx)||1;
+ const bs=[1,1.3,1.35,1][gameMode]*(boostT>0?1.5:1)*(1+.35*Math.min(1,diff())),dir=Math.sign(ball.vx)||1;
  ball.vx=dir*1.3*bs;ball.vy=-2*bs-(jumpBoost>0?3.5:0);ball.x+=ball.vx;ball.y+=ball.vy;
  ball.trail.push({x:ball.x,y:ball.y});if(ball.trail.length>16)ball.trail.shift();
  const hs=Math.floor(-ball.y/6);if(hs>score)score=hs;
